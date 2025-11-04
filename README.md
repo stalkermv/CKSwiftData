@@ -1,5 +1,8 @@
 # CKSwiftData
 
+> [!WARNING]
+> This project is in an early stage of development and is not ready for production use. APIs and behavior may change without notice. Use at your own risk.
+
 [![Tests](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml/badge.svg)](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml)
 [![Swift 6.1+](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
 [![Platforms](https://img.shields.io/badge/platforms-iOS%2017%20%7C%20macOS%2014%20%7C%20tvOS%2017%20%7C%20watchOS%2010-lightgrey.svg)](https://developer.apple.com)

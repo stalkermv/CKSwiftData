@@ -1,0 +1,58 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test Swift ${{ matrix.swift-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-15]
+        swift-version: ["6.1"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Swift ${{ matrix.swift-version }}
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: ${{ matrix.swift-version }}
+
+    - name: Swift version
+      run: swift --version
+
+    - name: Resolve dependencies
+      run: swift package resolve
+
+    - name: Build package
+      run: swift build
+
+    - name: Run tests
+      run: swift test --parallel
+
+  package-compatibility:
+    name: Package Compatibility
+    runs-on: macos-15
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: "6.1"
+
+    - name: Check package compatibility
+      run: |
+        swift package resolve
+        swift build
+        swift package dump-package
+        swift package show-dependencies

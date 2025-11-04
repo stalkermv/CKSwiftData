@@ -1,0 +1,7 @@
+CKSwiftData includes or depends upon third-party open source projects:
+
+- swift-syntax (https://github.com/apple/swift-syntax) — Apache License 2.0
+- swift-collections (https://github.com/apple/swift-collections) — Apache License 2.0
+- SwiftHelpers (https://github.com/stalkermv/SwiftHelpers) — MIT License
+
+Each dependency retains its respective license. Please review their repositories for full terms.

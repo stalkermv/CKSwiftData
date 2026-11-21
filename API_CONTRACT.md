@@ -201,6 +201,6 @@ The public 1.0 contract is complete only when all of these are true:
 - no public stub or silent capability default remains in the typed runtime;
   the legacy `BackingData` layer still stops on type mismatches via preconditions and is not
   part of the supported surface;
-- README, DocC, examples, migration guide, and schema setup are truthful;
+- README, DocC articles, the migration guide, and schema setup are truthful;
 - the agreed Apple platform matrix and isolated CloudKit development smoke
   checks pass.

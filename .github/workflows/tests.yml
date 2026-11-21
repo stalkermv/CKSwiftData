@@ -6,53 +6,109 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    name: Test Swift ${{ matrix.swift-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-15]
-        swift-version: ["6.1"]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Swift ${{ matrix.swift-version }}
-      uses: swift-actions/setup-swift@v2
-      with:
-        swift-version: ${{ matrix.swift-version }}
-
-    - name: Swift version
-      run: swift --version
-
-    - name: Resolve dependencies
-      run: swift package resolve
-
-    - name: Build package
-      run: swift build -Xswiftc -strict-concurrency=complete
-
-    - name: Run tests
-      run: swift test --parallel -Xswiftc -strict-concurrency=complete
-
-  package-compatibility:
-    name: Package Compatibility
+  swift-test:
+    name: Swift Test
     runs-on: macos-15
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup Swift
-      uses: swift-actions/setup-swift@v2
-      with:
-        swift-version: "6.1"
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.1"
 
-    - name: Check package compatibility
-      run: |
-        swift package resolve
-        swift build -Xswiftc -strict-concurrency=complete
-        swift package dump-package
-        swift package show-dependencies
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build package
+        run: swift build
+
+      - name: Build with complete strict concurrency checking
+        run: swift build -Xswiftc -strict-concurrency=complete
+
+      - name: Run tests
+        run: swift test --parallel -Xswiftc -strict-concurrency=complete
+
+  documentation:
+    name: DocC Build Check
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.1"
+
+      - name: Build documentation
+        run: |
+          DOCS_DIR="$(mktemp -d)"
+          swift package --allow-writing-to-directory "$DOCS_DIR" \
+            generate-documentation --target CKSwiftData \
+            --output-path "$DOCS_DIR" \
+            --transform-for-static-hosting \
+            --hosting-base-path CKSwiftData
+
+  apple-platforms:
+    name: Compile for ${{ matrix.destination }}
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        destination:
+          - generic/platform=iOS
+          - generic/platform=tvOS
+          - generic/platform=watchOS
+          - generic/platform=macOS
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.1"
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build CKSwiftData for ${{ matrix.destination }}
+        env:
+          DESTINATION: ${{ matrix.destination }}
+        run: |
+          log="${RUNNER_TEMP:-/tmp}/build.log"
+          build() {
+            xcodebuild build \
+              -scheme CKSwiftData \
+              -destination "$DESTINATION" \
+              -derivedDataPath "${RUNNER_TEMP:-/tmp}/CKSwiftData-derived" \
+              CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$log"
+            return "${PIPESTATUS[0]}"
+          }
+          if ! build; then
+            # Some runners come without the device platform that Xcode needs for a
+            # generic destination. Install it and retry; fail on any other error.
+            platform="${DESTINATION#generic/platform=}"
+            if grep -q "is not installed" "$log"; then
+              xcodebuild -downloadPlatform "$platform"
+              build
+            else
+              exit 1
+            fi
+          fi

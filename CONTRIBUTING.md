@@ -27,7 +27,8 @@ Screenshots or stack traces make debugging even faster.
 
 3. **Make your changes**
    - Keep code style consistent with the existing codebase
-   - Prefer adding DocC comments for new public APIs
+   - Prefer adding DocC comments for new public APIs, and update the
+     articles in `Sources/CKSwiftData/Documentation.docc` when behavior changes
    - Update or add tests when introducing new behavior
 
 4. **Verify locally**
@@ -35,6 +36,22 @@ Screenshots or stack traces make debugging even faster.
    swift build -Xswiftc -strict-concurrency=complete
    swift test --parallel -Xswiftc -strict-concurrency=complete
    swiftformat --lint .
+   ```
+
+   Build the DocC documentation (it must build without warnings):
+   ```bash
+   DOCS_DIR="$(mktemp -d)"
+   swift package --allow-writing-to-directory "$DOCS_DIR" \
+     generate-documentation --target CKSwiftData \
+     --output-path "$DOCS_DIR" \
+     --transform-for-static-hosting \
+     --hosting-base-path CKSwiftData
+   ```
+
+   Optionally compile for another Apple platform:
+   ```bash
+   xcodebuild build -scheme CKSwiftData \
+     -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO
    ```
 
 5. **Open a pull request**

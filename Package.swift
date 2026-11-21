@@ -10,7 +10,9 @@ let package = Package(
         .library(name: "CKSwiftData", targets: ["CKSwiftData"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "601.0.0")
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "601.0.0"),
+        // Documentation generation
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
         .target(

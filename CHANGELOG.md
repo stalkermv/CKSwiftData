@@ -33,12 +33,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `CKSwiftDataPerformance` benchmark executable, a performance test target, and
   a Time Profiler script.
 - `swiftformat` configuration and API contract and architecture documents.
+- DocC documentation catalog (guides for getting started, modeling, testing,
+  relationships and migrations, and the legacy layer), published to GitHub
+  Pages by a documentation workflow, and a `swift-docc-plugin` dependency to
+  build it.
+- Issue and pull request templates.
 
 ### Changed
 - Rewrote the `@CloudModel`, `@Attribute`, and `@Relationship` macros to
   generate typed storage and schema metadata. `@Relationship` takes an
   `inverseName` for cross-model declarations.
-- CI now builds and tests with complete strict concurrency checking.
+- CI now builds and tests with complete strict concurrency checking, compiles
+  the package for iOS, tvOS, watchOS, and macOS, and builds the documentation.
 - `Package.resolved` is no longer tracked.
 
 ### Fixed

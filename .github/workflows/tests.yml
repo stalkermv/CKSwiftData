@@ -32,10 +32,10 @@ jobs:
       run: swift package resolve
 
     - name: Build package
-      run: swift build
+      run: swift build -Xswiftc -strict-concurrency=complete
 
     - name: Run tests
-      run: swift test --parallel
+      run: swift test --parallel -Xswiftc -strict-concurrency=complete
 
   package-compatibility:
     name: Package Compatibility
@@ -53,6 +53,6 @@ jobs:
     - name: Check package compatibility
       run: |
         swift package resolve
-        swift build
+        swift build -Xswiftc -strict-concurrency=complete
         swift package dump-package
         swift package show-dependencies

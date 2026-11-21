@@ -32,8 +32,9 @@ Screenshots or stack traces make debugging even faster.
 
 4. **Verify locally**
    ```bash
-   swift build
-   swift test --parallel
+   swift build -Xswiftc -strict-concurrency=complete
+   swift test --parallel -Xswiftc -strict-concurrency=complete
+   swiftformat --lint .
    ```
 
 5. **Open a pull request**
@@ -55,9 +56,11 @@ Screenshots or stack traces make debugging even faster.
 
 ## Release Process
 
-1. Update [`CHANGELOG.md`](CHANGELOG.md)
-2. Bump the version in `Package.swift`
-3. Create a GitHub release with notes from the changelog
+1. Update [`CHANGELOG.md`](CHANGELOG.md) in a pull request against `main`
+   and squash-merge it once CI passes.
+2. Tag the release commit on `main` with the version number, without a `v`
+   prefix (for example `0.2.0`).
+3. Create a GitHub release for the tag with notes from the changelog.
 
 ## Questions?
 

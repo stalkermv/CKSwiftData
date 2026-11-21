@@ -7,16 +7,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
-- Initial documentation scaffold and community health files
-- CI workflow that builds and tests the package on macOS with Swift 6.1
-- README with quick-start examples for using the macros
+- Typed CloudKit identities (container, zone, record, and model identifiers)
+  and immutable, validated schema manifests with deterministic `Codable`
+  encoding.
+- Typed record boundary (`CloudRecordValue`, `CloudRecordSnapshot`,
+  `CloudRecordMutation`) with request validation, explicit complete and partial
+  modification outcomes, and a deterministic JSON codec for custom `Codable`
+  values.
+- `CloudKitRecordStore` actor and main-actor `CloudModelContext` /
+  `CloudModelContainer` with an identity map, change tracking, rollback,
+  projected (partial) fetches, upsert/update semantics, and optimistic conflict
+  handling.
+- `CloudKitDatabaseClient`, an explicit CloudKit adapter with an injected
+  `CKDatabase`, cursor routing, and per-record failures.
+- Retry policies that classify transient `CKError` cases, honor retry-after
+  delays, and propagate cancellation.
+- Asset staging with ownership leases, cancellation-safe cleanup, and explicit
+  uploads for `@Attribute(.externalStorage)` fields.
+- Canonical relationship edge records with a graph planner, edge reader, and
+  explicit delete-rule plans.
+- Migration compatibility planning, required-field backfill stages, and a
+  checkpoint coordinator with an injectable stage executor.
+- `CKSwiftDataTesting.InMemoryCloudDatabaseClient` and a scripted client for
+  tests and previews.
+- `CKSwiftDataPerformance` benchmark executable, a performance test target, and
+  a Time Profiler script.
+- `swiftformat` configuration and API contract and architecture documents.
 
-## [0.1.0] - 2025-02-26
+### Changed
+- Rewrote the `@CloudModel`, `@Attribute`, and `@Relationship` macros to
+  generate typed storage and schema metadata. `@Relationship` takes an
+  `inverseName` for cross-model declarations.
+- CI now builds and tests with complete strict concurrency checking.
+- `Package.resolved` is no longer tracked.
 
-### Added
-- `@CloudModel` macro that synthesizes CloudKit backing storage and schema metadata
-- `@PersistedProperty`, `@Attribute`, and `@Relationship` macros for describing CloudKit fields
-- Runtime support for CloudKit-backed models, including `CKDatabase` helpers and schema types
-
-[Unreleased]: https://github.com/stalkermv/CKSwiftData/compare/0.1.0...HEAD
-[0.1.0]: https://github.com/stalkermv/CKSwiftData/releases/tag/0.1.0
+### Removed
+- The `swift-collections` and `SwiftHelpers` package dependencies.
+- The demo `User` model that was declared in the library target.

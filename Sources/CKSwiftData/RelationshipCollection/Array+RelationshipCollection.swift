@@ -4,6 +4,6 @@
 
 import Foundation
 
-extension Array : RelationshipCollection where Element : CloudKitModel {
+extension Array: RelationshipCollection where Element: CloudKitModel {
     public typealias PersistentElement = Element
 }

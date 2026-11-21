@@ -5,5 +5,5 @@
 import Foundation
 
 public protocol RelationshipCollection {
-    associatedtype PersistentElement : CloudKitModel
+    associatedtype PersistentElement: CloudKitModel
 }

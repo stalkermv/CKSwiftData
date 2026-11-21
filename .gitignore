@@ -2,7 +2,9 @@
 .swiftpm
 .build
 Package.pins
+Package.resolved
 DerivedData
 xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata
 *.xcodeproj/xcuserdata
+docs/

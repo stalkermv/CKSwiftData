@@ -7,6 +7,4 @@
 
 import Foundation
 
-final public class Schema {
-    
-}
+public final class Schema {}

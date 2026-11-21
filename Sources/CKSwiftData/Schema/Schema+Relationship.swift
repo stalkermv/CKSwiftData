@@ -5,82 +5,109 @@
 import Foundation
 
 extension Schema {
-    
     /// An object that describes the configuration and behavior of a relationship between two model classes.
-    final public class Relationship : SchemaProperty {
-        
-        final public var name: String
-        
-        final public var originalName: String
-        
-        final public var keypath: AnyKeyPath?
-        
-        final public var options: [Schema.Relationship.Option]
-        
-        final public var valueType: Any.Type
-        
-        final public var destination: String
-        
-        final public var deleteRule: Schema.Relationship.DeleteRule
-        
-        final public var inverseName: String?
-        
-        final public var inverseKeyPath: AnyKeyPath?
-        
-        final public var minimumModelCount: Int?
-        
-        final public var maximumModelCount: Int?
-        
-        final public var hashModifier: String?
-        
-        final public var isToOneRelationship: Bool {
+    public final class Relationship: SchemaProperty {
+        public final var name: String
+
+        public final var originalName: String
+
+        public final var keypath: AnyKeyPath?
+
+        public final var options: [Schema.Relationship.Option]
+
+        public final var valueType: Any.Type
+
+        public final var destination: String
+
+        public final var deleteRule: Schema.Relationship.DeleteRule
+
+        public final var inverseName: String?
+
+        public final var inverseKeyPath: AnyKeyPath?
+
+        public final var minimumModelCount: Int?
+
+        public final var maximumModelCount: Int?
+
+        public final var hashModifier: String?
+
+        public final var isToOneRelationship: Bool {
             guard let keypath else { return false }
             return type(of: keypath).valueType is (any RelationshipCollection.Type) == false
         }
-        
+
         public init(
-            _ options: Schema.Relationship.Option... ,
+            _ options: Schema.Relationship.Option...,
             deleteRule: Schema.Relationship.DeleteRule = .nullify,
             minimumModelCount: Int? = 0,
-            maximumModelCount: Int? = 0,
+            maximumModelCount: Int? = nil,
             originalName: String? = nil,
             inverse: AnyKeyPath? = nil,
             hashModifier: String? = nil
         ) {
-            self.name = ""
+            name = ""
             self.originalName = originalName ?? ""
-            self.keypath = nil
+            keypath = nil
             self.options = options
-            self.valueType = Any.self
-            self.destination = ""
+            valueType = Any.self
+            destination = ""
             self.deleteRule = deleteRule
-            self.inverseName = nil
-            self.inverseKeyPath = inverse
+            inverseName = nil
+            inverseKeyPath = inverse
             self.minimumModelCount = minimumModelCount
             self.maximumModelCount = maximumModelCount
             self.hashModifier = hashModifier
         }
-        
-        final public var isUnique: Bool {
+
+        /// Creates a fully described relationship for the typed CloudKit
+        /// manifest. The legacy variadic initializer remains available for
+        /// source compatibility, while this overload records stable names and
+        /// the destination without relying on runtime key-path reflection.
+        public init(
+            name: String,
+            originalName: String? = nil,
+            options: [Schema.Relationship.Option] = [],
+            destination: String,
+            deleteRule: Schema.Relationship.DeleteRule = .nullify,
+            minimumModelCount: Int? = 0,
+            maximumModelCount: Int? = nil,
+            inverseName: String? = nil,
+            hashModifier: String? = nil
+        ) {
+            self.name = name
+            self.originalName = originalName ?? name
+            keypath = nil
+            self.options = options
+            valueType = Any.self
+            self.destination = destination
+            self.deleteRule = deleteRule
+            self.inverseName = inverseName
+            inverseKeyPath = nil
+            self.minimumModelCount = minimumModelCount
+            self.maximumModelCount = maximumModelCount
+            self.hashModifier = hashModifier
+        }
+
+        public final var isUnique: Bool {
             options.contains(.unique)
         }
-        
-        final public var isAttribute: Bool {
+
+        public final var isAttribute: Bool {
             // This is a Relationship schema node, not an Attribute
-            return false
+            false
         }
 
         /// Indicates whether the relationship is optional.
-        final public var isOptional: Bool {
-            return minimumModelCount == 0
+        public final var isOptional: Bool {
+            minimumModelCount == 0
         }
-        
-        final public var isTransient: Bool {
+
+        public final var isTransient: Bool {
             // TODO: Add .transient option when supported
-            return false
+            false
         }
-        
-        final public var debugDescription: String {
+
+        public final var debugDescription: String {
             """
             Relationship(
                 name: \(name),
@@ -98,27 +125,27 @@ extension Schema {
             )
             """
         }
-        
+
         // MARK: Codable
-        
+
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            self.name = try container.decode(String.self, forKey: .name)
-            self.originalName = try container.decode(String.self, forKey: .originalName)
-            self.options = try container.decode([Schema.Relationship.Option].self, forKey: .options)
-            self.destination = try container.decode(String.self, forKey: .destination)
-            self.deleteRule = try container.decode(Schema.Relationship.DeleteRule.self, forKey: .deleteRule)
-            self.inverseName = try container.decodeIfPresent(String.self, forKey: .inverseName)
-            self.minimumModelCount = try container.decodeIfPresent(Int.self, forKey: .minimumModelCount)
-            self.maximumModelCount = try container.decodeIfPresent(Int.self, forKey: .maximumModelCount)
-            self.hashModifier = try container.decodeIfPresent(String.self, forKey: .hashModifier)
-            
+            name = try container.decode(String.self, forKey: .name)
+            originalName = try container.decode(String.self, forKey: .originalName)
+            options = try container.decode([Schema.Relationship.Option].self, forKey: .options)
+            destination = try container.decode(String.self, forKey: .destination)
+            deleteRule = try container.decode(Schema.Relationship.DeleteRule.self, forKey: .deleteRule)
+            inverseName = try container.decodeIfPresent(String.self, forKey: .inverseName)
+            minimumModelCount = try container.decodeIfPresent(Int.self, forKey: .minimumModelCount)
+            maximumModelCount = try container.decodeIfPresent(Int.self, forKey: .maximumModelCount)
+            hashModifier = try container.decodeIfPresent(String.self, forKey: .hashModifier)
+
             // Non-codable runtime-only fields
-            self.keypath = nil
-            self.inverseKeyPath = nil
-            self.valueType = Any.self
+            keypath = nil
+            inverseKeyPath = nil
+            valueType = Any.self
         }
-        
+
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(name, forKey: .name)
@@ -131,21 +158,21 @@ extension Schema {
             try container.encodeIfPresent(maximumModelCount, forKey: .maximumModelCount)
             try container.encodeIfPresent(hashModifier, forKey: .hashModifier)
         }
-        
+
         // MARK: Hashable
-        
+
         public static func == (lhs: Schema.Relationship, rhs: Schema.Relationship) -> Bool {
             lhs.name == rhs.name &&
-            lhs.originalName == rhs.originalName &&
-            lhs.destination == rhs.destination &&
-            lhs.deleteRule == rhs.deleteRule &&
-            lhs.inverseName == rhs.inverseName &&
-            lhs.minimumModelCount == rhs.minimumModelCount &&
-            lhs.maximumModelCount == rhs.maximumModelCount &&
-            lhs.options == rhs.options &&
-            lhs.hashModifier == rhs.hashModifier
+                lhs.originalName == rhs.originalName &&
+                lhs.destination == rhs.destination &&
+                lhs.deleteRule == rhs.deleteRule &&
+                lhs.inverseName == rhs.inverseName &&
+                lhs.minimumModelCount == rhs.minimumModelCount &&
+                lhs.maximumModelCount == rhs.maximumModelCount &&
+                lhs.options == rhs.options &&
+                lhs.hashModifier == rhs.hashModifier
         }
-        
+
         public func hash(into hasher: inout Hasher) {
             hasher.combine(name)
             hasher.combine(originalName)
@@ -157,7 +184,7 @@ extension Schema {
             hasher.combine(options)
             hasher.combine(hashModifier)
         }
-        
+
         private enum CodingKeys: String, CodingKey {
             case name
             case originalName
@@ -175,15 +202,14 @@ extension Schema {
 // MARK: - Relationship.Option
 
 extension Schema.Relationship {
-    public struct Option : Codable, Hashable, CustomDebugStringConvertible {
-        
+    public struct Option: Codable, Hashable, CustomDebugStringConvertible {
         let isUnique: Bool
 
         /// Ensures the property's value is unique across all models of the same type.
         public static var unique: Schema.Relationship.Option {
             Self(isUnique: true)
         }
-        
+
         public var debugDescription: String {
             """
             Option(
@@ -198,8 +224,7 @@ extension Schema.Relationship {
 
 extension Schema.Relationship {
     /// Describes the rule to apply when deleting a model containing references to other models.
-    public enum DeleteRule : String, Codable {
-
+    public enum DeleteRule: String, Codable {
         /// A rule that doesn't make changes to any related models.
         ///
         /// Ensure that you take the appropriate action on any related models when using this delete rule,
@@ -219,8 +244,8 @@ extension Schema.Relationship {
     }
 }
 
-extension Schema.Relationship.DeleteRule : Equatable { }
+extension Schema.Relationship.DeleteRule: Equatable {}
 
-extension Schema.Relationship.DeleteRule : Hashable { }
+extension Schema.Relationship.DeleteRule: Hashable {}
 
-extension Schema.Relationship.DeleteRule : RawRepresentable { }
+extension Schema.Relationship.DeleteRule: RawRepresentable {}

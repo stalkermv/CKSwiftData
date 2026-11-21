@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   Pages by a documentation workflow, and a `swift-docc-plugin` dependency to
   build it.
 - Issue and pull request templates.
+- Swift Package Index configuration for the DocC documentation.
 
 ### Changed
 - Rewrote the `@CloudModel`, `@Attribute`, and `@Relationship` macros to

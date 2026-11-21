@@ -1,7 +1,7 @@
 # CKSwiftData
 
 [![Tests](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml/badge.svg)](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml)
-[![Swift 6.1+](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
+[![Swift 6.2+](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org)
 [![Platform](https://img.shields.io/badge/platform-iOS%2017%2B%20%7C%20macOS%2014%2B%20%7C%20tvOS%2017%2B%20%7C%20watchOS%2010%2B-lightgrey.svg)](https://developer.apple.com/swift/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -15,7 +15,7 @@ Declare CloudKit models with macros, in the style of SwiftData. Save and fetch t
 
 ## Requirements
 
-- Swift 6.1 or later
+- Swift 6.2 or later
 - iOS 17, macOS 14, tvOS 17, or watchOS 10 and later
 
 ## Installation

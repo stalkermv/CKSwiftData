@@ -1,98 +1,45 @@
 # CKSwiftData
 
-> [!WARNING]
-> This project is in an early stage of development and is not ready for production use. APIs and behavior may change without notice. Use at your own risk.
+[![Tests](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml/badge.svg)](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml)
+[![Swift 6.1+](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
+[![Platform](https://img.shields.io/badge/platform-iOS%2017%2B%20%7C%20macOS%2014%2B%20%7C%20tvOS%2017%2B%20%7C%20watchOS%2010%2B-lightgrey.svg)](https://developer.apple.com/swift/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> [!IMPORTANT]
+Macro-powered CloudKit models with SwiftData-inspired ergonomics.
+
+- Declare models with `@CloudModel`, `@Attribute`, and `@Relationship`
+- Persist through an explicit, injected CloudKit database client; property getters never perform network I/O
+- Save, fetch, roll back, and resolve conflicts through a main-actor `CloudModelContext`
+- Test without CloudKit using deterministic in-memory and scripted clients
+
+> [!WARNING]
 > CKSwiftData is pre-1.0 and its API may change between minor releases.
 > Behavior against a live CloudKit container is not covered by automated tests
 > yet, and predicate/sort queries, shared-zone discovery, operator-driven
 > migration backfills, and removal of the legacy `BackingData` layer are not
 > supported. See [Status and coverage](#status-and-coverage) for details.
 
-[![Tests](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml/badge.svg)](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml)
-[![Swift 6.1+](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
-[![Platforms](https://img.shields.io/badge/platforms-iOS%2017%20%7C%20macOS%2014%20%7C%20tvOS%2017%20%7C%20watchOS%2010-lightgrey.svg)](https://developer.apple.com)
-
-Macro-powered CloudKit models with SwiftData-inspired ergonomics. Annotate your classes with `@CloudModel` and let CKSwiftData generate CloudKit plumbing, record metadata accessors, schema information, and persistence helpers that feel just like SwiftData – but for CloudKit.
-
-- 📚 **Documentation** – Inline documentation comments for public APIs
-- 💡 **Examples** – See [Quick Start](#quick-start) and [Usage Examples](#usage-examples)
-- 🤝 **Contributions** – Always welcome! See [CONTRIBUTING.md](CONTRIBUTING.md)
-- 🪪 **License** – MIT License, see [LICENSE](LICENSE)
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage Examples](#usage-examples)
-  - [Persisted Attributes](#persisted-attributes)
-  - [Relationships](#relationships)
-  - [CloudKit Persistence](#cloudkit-persistence)
-- [Schema Metadata](#schema-metadata)
-- [Status and coverage](#status-and-coverage)
-- [Development checks](#development-checks)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Overview
-
-CKSwiftData bridges the gap between SwiftData's expressive model syntax and CloudKit's remote persistence. You write familiar SwiftData-style model code; CKSwiftData handles the macros, backing storage, and CloudKit record interactions under the hood.
-
-The package exposes two modules:
-
-- `CKSwiftData` – Public macros and runtime helpers used by your app
-- `CKSwiftDataMacros` – Compiler plugin that powers macro expansion (imported automatically when you use the macros)
-
-## Features
-
-- ✅ **`@CloudModel` / `@Attribute` / `@Relationship`** – Macro expansion,
-  typed metadata, defaults, bounds, and explicit inverse names.
-- ✅ **Schema-aware runtime** – Immutable validated manifests and typed record
-  values/codecs.
-- ✅ **Contexts and store** – Actor persistence, main-actor identity map,
-  rollback, partial outcomes, conflicts, retries, and typed container APIs.
-- ✅ **CloudKit adapter and assets** – Explicit database injection, cursor
-  routing, per-record failures, staging leases, and upload binding.
-- ✅ **Relationship and migration planning** – Deterministic edge plans,
-  delete rules, compatibility classification, and checkpoint coordination.
-- 🚧 **Production operations** – Live CloudKit smoke tests, application-specific
-  migration executors, and legacy backing-layer retirement are planned.
-
 ## Installation
 
-Add CKSwiftData to your `Package.swift`:
+Add `CKSwiftData` to your `Package.swift`:
 
 ```swift
-// swift-tools-version: 6.1
-
-import PackageDescription
-
-let package = Package(
-    // ...
-    dependencies: [
-        .package(url: "https://github.com/stalkermv/CKSwiftData.git", .upToNextMinor(from: "0.2.0"))
-    ],
-    targets: [
-        .target(
-            name: "YourFeatureModule",
-            dependencies: [
-                .product(name: "CKSwiftData", package: "CKSwiftData")
-            ]
-        ),
-    ]
-)
+dependencies: [
+    .package(url: "https://github.com/stalkermv/CKSwiftData.git", .upToNextMinor(from: "0.2.0"))
+],
+targets: [
+    .target(
+        name: "YourApp",
+        dependencies: [
+            .product(name: "CKSwiftData", package: "CKSwiftData")
+        ]
+    )
+]
 ```
 
-Then import CKSwiftData where you declare models:
-
-```swift
-import CKSwiftData
-```
-
-> **Tip:** While APIs stabilize, prefer `.upToNextMinor` requirements to avoid unexpected breaking changes.
+Prefer `.upToNextMinor` while the API stabilizes. The package exposes the
+`CKSwiftData` library; its `CKSwiftDataMacros` compiler plugin is used
+automatically when you apply the macros.
 
 ## Quick Start
 
@@ -166,7 +113,7 @@ let folders = page.models
 let cursor = page.nextCursor
 ```
 
-## Usage Examples
+## Usage
 
 ### Persisted Attributes
 
@@ -221,7 +168,7 @@ Relationship edge records are planned through `CloudRelationshipGraphPlanner`
 and read through `CloudRelationshipEdgeReader`; model collection hydration is
 kept explicit rather than performing hidden network I/O from a getter.
 
-## Schema Metadata
+### Schema Metadata
 
 Every `@CloudModel` exposes static `schemaMetadata` describing its attributes and relationships. You can inspect it for migrations, validation, or generating CloudKit dashboards.
 
@@ -232,6 +179,12 @@ for property in Project.schemaMetadata {
 ```
 
 The backing types live under `Schema.Attribute`, `Schema.Relationship`, and `Schema.PropertyMetadata` for further customization.
+
+## Testing
+
+For tests and previews, inject `CKSwiftDataTesting.InMemoryCloudDatabaseClient`
+or `CKSwiftDataTesting.ScriptedCloudDatabaseClient` instead of a
+`CloudKitDatabaseClient`. Both are deterministic and never contact CloudKit.
 
 ## Status and coverage
 
@@ -291,7 +244,23 @@ No planned public feature is represented by a silent no-op or empty success.
 - Automatic destructive production CloudKit schema/index deletion.
 - Global atomic transactions beyond CloudKit request limits.
 
-## Development checks
+## Documentation
+
+DocC documentation lives in the package and can be browsed in Xcode (Product ›
+Build Documentation) or built locally:
+
+```bash
+swift package --allow-writing-to-directory ./docs \
+  generate-documentation --target CKSwiftData \
+  --output-path ./docs \
+  --transform-for-static-hosting \
+  --hosting-base-path CKSwiftData
+```
+
+The public contract is summarized in [API_CONTRACT.md](API_CONTRACT.md) and the
+design in [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Development
 
 ```bash
 swift build -Xswiftc -strict-concurrency=complete
@@ -299,15 +268,18 @@ swift test -Xswiftc -strict-concurrency=complete
 swiftformat --lint .
 ```
 
-Tests run against the in-memory and scripted clients; they do not talk to a
-live CloudKit container.
+CKSwiftData supports iOS 17+, macOS 14+, tvOS 17+, and watchOS 10+. CI runs the
+host tests, compiles the package for each Apple platform, and builds the
+documentation. Tests run against the in-memory and scripted clients; they do not
+talk to a live CloudKit container. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+the full workflow and [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
-See [CHANGELOG.md](CHANGELOG.md) for release notes.
+## Release
 
-## Contributing
-
-Contributions are very welcome! Check out [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, development workflow, and contact information. Security issues? Please follow the process in [SECURITY.md](SECURITY.md).
+Release tags follow plain semver without a `v` prefix, for example `0.2.0`.
+CKSwiftData is published as a source-only Swift Package; it does not ship
+binary artifacts. See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 
-CKSwiftData is released under the [MIT License](LICENSE).
+CKSwiftData is available under the MIT license. See [LICENSE](LICENSE).

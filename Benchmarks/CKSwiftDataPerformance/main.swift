@@ -124,7 +124,7 @@ struct CKSwiftDataPerformance {
 
     private static func measure<Value>(
         _ name: StaticString,
-        operation: () async throws -> Value
+        operation: @MainActor () async throws -> Value
     ) async throws -> (Value, Double) {
         let signpostID = OSSignpostID(log: log)
         let clock = ContinuousClock()

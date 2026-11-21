@@ -129,6 +129,9 @@ is still returned to its caller.
 - Automatic inverse relationship graph hydration and context-level delete-rule
   execution; loaded record references are preserved, while graph hydration and
   delete plans remain explicit operations.
+- Shared databases in `CloudKitDatabaseClient`. Creating the client for a
+  shared-database configuration throws `sharedZoneOwnerRequired` until zone
+  owner discovery is supported.
 - Predicate/sort fetch descriptors and durable CloudKit cursor restoration
   across process recreation. CloudKit adapter cursors are process-scoped and
   bound to their model/field selection.

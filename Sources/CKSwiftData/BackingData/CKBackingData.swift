@@ -6,7 +6,16 @@
 //
 
 import CloudKit
+import OSLog
 
+private extension Logger {
+    static let legacy = Logger(subsystem: "com.stalkermv.CKSwiftData", category: "legacy")
+}
+
+/// Record-backed storage used by macro-generated `@CloudModel` declarations.
+///
+/// This is part of the legacy compatibility layer. New code should use the
+/// typed runtime (`CloudModelContainer` and `CloudModelContext`).
 final class CKBackingData<T: CloudKitModel>: BackingData {
     private enum AnyCachedRelationship: Hashable {
         case single(AnyCloudKitModel)
@@ -45,7 +54,7 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
 
     func findProperty<Value>(forKey keyPath: KeyPath<Model, Value>) -> Schema.PropertyMetadata {
         guard let property = T.schemaMetadata[keyPath] else {
-            preconditionFailure("Property not found in schema metadata")
+            preconditionFailure("Key path \(keyPath) was not found in the schema metadata of \(T.self)")
         }
         return property
     }
@@ -60,19 +69,20 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
         let property = findProperty(forKey: keyPath)
         if let property = property.metadata as? Schema.Attribute, property.options.contains(.externalStorage) {
             if let asset = record[property.name] as? CKAsset,
-               let data = try? Data(contentsOf: asset.fileURL!),
+               let fileURL = asset.fileURL,
+               let data = try? Data(contentsOf: fileURL),
                let decodedValue = try? JSONDecoder().decode(Value.self, from: data)
             {
                 return decodedValue
             } else {
-                return property.defaultValue as! Value
+                return requireValue(property.defaultValue, named: property.name)
             }
         }
 
         if let value = record[property.name] as? CKRecordValueProtocol {
-            return value as! Value
+            return requireValue(value, named: property.name)
         } else {
-            return property.defaultValue as! Value
+            return requireValue(property.defaultValue, named: property.name)
         }
     }
 
@@ -150,8 +160,11 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
     {
         let property = findProperty(forKey: keyPath)
         if let property = property.metadata as? Schema.Attribute, property.options.contains(.externalStorage) {
-            let asset = CKAsset(encodable: newValue, fileName: property.name, fileExtension: "data")
-            record[property.name] = asset
+            do {
+                record[property.name] = try CKAsset(encodable: newValue, fileName: property.name, fileExtension: "data")
+            } catch {
+                preconditionFailure("Could not stage asset for property '\(property.name)' of \(T.self): \(error)")
+            }
         } else {
             record[property.name] = newValue
         }
@@ -248,7 +261,19 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
     }
 
     private func preconditionFailureValue<Value>(_ propertyName: String) -> Value {
-        preconditionFailure("Missing default value for relationship \(propertyName)")
+        preconditionFailure("Missing default value for relationship \(propertyName) of \(T.self)")
+    }
+
+    /// Casts a stored or default value to the property's declared type, and
+    /// stops with a descriptive message when the types do not match.
+    private func requireValue<Value>(_ value: Any?, named propertyName: String) -> Value {
+        guard let typed = value as? Value else {
+            let actual = value.map { String(describing: type(of: $0)) } ?? "nil"
+            preconditionFailure(
+                "Property '\(propertyName)' of \(T.self) expected a value of type \(Value.self) but found \(actual)"
+            )
+        }
+        return typed
     }
 }
 
@@ -332,7 +357,12 @@ extension Schema.Relationship {
 
 extension BackingData {
     var record: CKRecord {
-        (self as! CKBackingData<Model>).record
+        guard let backingData = self as? CKBackingData<Model> else {
+            preconditionFailure(
+                "Expected a CKBackingData<\(Model.self)> but found \(type(of: self)); only CKBackingData is supported"
+            )
+        }
+        return backingData.record
     }
 }
 
@@ -393,7 +423,7 @@ extension CKDatabase {
                 backing.record = record
                 decoded.append(T(backingData: backing))
             case let .failure(error):
-                print("⚠️ Failed to fetch record \(id.recordName): \(error)")
+                Logger.legacy.error("Failed to fetch record \(id.recordName): \(error)")
             }
         }
         return (decoded, result.queryCursor)
@@ -401,11 +431,22 @@ extension CKDatabase {
 }
 
 extension CKAsset {
-    convenience init(encodable value: some Encodable, fileName: String, fileExtension: String, encoder: JSONEncoder = JSONEncoder()) {
-        let tempDir = FileManager.default.temporaryDirectory
-        let fileURL = tempDir.appendingPathComponent("\(fileName).\(fileExtension)")
-        let data = try! encoder.encode(value)
-        try! data.write(to: fileURL)
+    /// Encodes `value` to a uniquely named temporary file and wraps it in an
+    /// asset. Every call writes to its own directory, so concurrent or repeated
+    /// calls with the same `fileName` never overwrite each other.
+    convenience init(
+        encodable value: some Encodable,
+        fileName: String,
+        fileExtension: String,
+        encoder: JSONEncoder = JSONEncoder()
+    ) throws {
+        let data = try encoder.encode(value)
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CKSwiftData", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let fileURL = directory.appendingPathComponent("\(fileName).\(fileExtension)")
+        try data.write(to: fileURL)
         self.init(fileURL: fileURL)
     }
 }

@@ -41,6 +41,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - CI now builds and tests with complete strict concurrency checking.
 - `Package.resolved` is no longer tracked.
 
+### Fixed
+- Temporary files for legacy `@Attribute(.externalStorage)` assets now use a
+  unique location per write, so repeated or concurrent writes no longer
+  overwrite each other. Encoding and write failures stop with a descriptive
+  message instead of an unlabeled `try!` crash.
+- Failed record fetches in the legacy `CKDatabase.records(of:matching:)` helper
+  are logged through `os.Logger` instead of `print`.
+
 ### Removed
 - The `swift-collections` and `SwiftHelpers` package dependencies.
 - The demo `User` model that was declared in the library target.

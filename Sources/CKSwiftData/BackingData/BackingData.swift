@@ -7,6 +7,10 @@
 
 import CloudKit
 
+/// Storage behind a macro-generated `@CloudModel` declaration.
+///
+/// This is part of the legacy compatibility layer. New code should use the
+/// typed runtime (`CloudModelContainer` and `CloudModelContext`).
 public protocol BackingData<Model> {
     associatedtype Model: CloudKitModel
 

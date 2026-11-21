@@ -156,9 +156,9 @@ the client library's automatic scope.
 ## Legacy `BackingData` layer
 
 The `BackingData`/`CKBackingData` graph predates the typed runtime and is kept
-for compatibility. It is not the foundation of the 1.0 runtime. Its raw and
-force-cast paths will be replaced by typed layers with focused tests, and the
-legacy runtime will be removed or hardened only after the complete 1.0 criteria
+for compatibility. It is not the foundation of the 1.0 runtime. Its raw
+and precondition-based paths will be replaced by typed layers with focused
+tests, and the legacy runtime will be removed or hardened only after the complete 1.0 criteria
 pass. New code should use the typed schema, `CloudModelContext`, and
 `CloudKitRecordStore`.
 

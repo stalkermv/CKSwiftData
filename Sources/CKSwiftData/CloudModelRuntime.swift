@@ -112,9 +112,9 @@ public extension CloudPersistentModel {
     }
 }
 
-/// The default bridge for the prototype's `CloudKitModel` declaration. It is
-/// deliberately kept in a separate extension so the 1.0 runtime can replace
-/// the old `BackingData` implementation without changing the context API.
+/// The default bridge for models declared through the legacy `CloudKitModel`
+/// protocol. It is kept in a separate extension so the typed runtime can
+/// replace the `BackingData` implementation without changing the context API.
 public extension CloudPersistentModel where Self: CloudKitModel {
     static var cloudRecordType: String { recordType }
 

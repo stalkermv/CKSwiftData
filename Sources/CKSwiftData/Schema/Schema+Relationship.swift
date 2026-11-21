@@ -103,7 +103,7 @@ extension Schema {
         }
 
         public final var isTransient: Bool {
-            // TODO: Add .transient option when supported
+            // Relationships are always persisted; use `@Transient` on non-persisted properties.
             false
         }
 

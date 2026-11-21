@@ -1,6 +1,6 @@
 //
 //  Constants.swift
-//  Mem
+//  CKSwiftData
 //
 //  Created by Valeriy Malishevskyi on 01.09.2025.
 //

@@ -7,12 +7,13 @@ import SwiftSyntax
 extension TokenSyntax {
     func makePrivatePrefixed(with prefix: String) -> TokenSyntax {
         switch tokenKind {
-        case .identifier(let identifier):
-            return TokenSyntax(
+        case let .identifier(identifier):
+            TokenSyntax(
                 .identifier(prefix + identifier), leadingTrivia: leadingTrivia,
-                trailingTrivia: trailingTrivia, presence: presence)
+                trailingTrivia: trailingTrivia, presence: presence
+            )
         default:
-            return self
+            self
         }
     }
 }

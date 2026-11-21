@@ -8,7 +8,6 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
 public enum TransientPropertyMacro: PeerMacro {
-    
     static let name = "Transient"
 
     public static func expansion(

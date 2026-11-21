@@ -4,9 +4,9 @@
 
 import Foundation
 
-@attached(peer) 
+@attached(peer)
 public macro Attribute(
     _ options: Schema.Attribute.Option...,
     originalName: String? = nil,
     hashModifier: String? = nil
-) = #externalMacro(module: "CKSwiftDataMacros", type: "AttributePropertyMacro")
+) = #externalMacro(module: "CKSwiftDataMacros", type: "AttributeMacro")

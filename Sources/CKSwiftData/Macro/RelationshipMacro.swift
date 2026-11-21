@@ -27,5 +27,6 @@ public macro Relationship(
     minimum: Int = 0,
     maximum: Int = 0,
     originalName: String? = nil,
+    inverseName: String? = nil,
     hashModifier: String? = nil
 ) = #externalMacro(module: "CKSwiftDataMacros", type: "RelationshipMacro")

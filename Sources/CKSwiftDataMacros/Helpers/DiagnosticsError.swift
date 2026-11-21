@@ -10,13 +10,13 @@ struct UniversalSwiftDataDiagnostic: DiagnosticMessage {
         case invalidApplication = "invalid type"
         case missingInitializer = "missing initializer"
     }
-    
+
     var message: String
     var diagnosticID: MessageID
     var severity: DiagnosticSeverity
-    
+
     init(
-        message: String, 
+        message: String,
         diagnosticID: SwiftDiagnostics.MessageID,
         severity: SwiftDiagnostics.DiagnosticSeverity = .error
     ) {
@@ -24,17 +24,17 @@ struct UniversalSwiftDataDiagnostic: DiagnosticMessage {
         self.diagnosticID = diagnosticID
         self.severity = severity
     }
-    
+
     init(
         message: String,
         domain: String,
         id: ID,
         severity: SwiftDiagnostics.DiagnosticSeverity = .error
-      ) {
+    ) {
         self.message = message
-        self.diagnosticID = MessageID(domain: domain, id: id.rawValue)
+        diagnosticID = MessageID(domain: domain, id: id.rawValue)
         self.severity = severity
-      }
+    }
 }
 
 extension DiagnosticsError {
@@ -51,7 +51,7 @@ extension DiagnosticsError {
             id: id,
             severity: severity
         )
-        
+
         let diagnostic = Diagnostic(node: Syntax(syntax), message: message)
         self.init(diagnostics: [diagnostic])
     }

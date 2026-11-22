@@ -30,7 +30,7 @@ A clear and concise description of what you expected to happen.
 - CloudKit environment: [e.g. development, production]
 - OS: [e.g. iOS 17.1, macOS 14.1]
 - Xcode Version: [e.g. 15.0]
-- Swift Version: [e.g. 6.2]
+- Swift Version: [e.g. 6.4]
 - CKSwiftData Version: [e.g. 0.2.0]
 
 **Additional context**

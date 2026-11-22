@@ -52,7 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - CI now builds and tests with complete strict concurrency checking, compiles
   the package for iOS, tvOS, watchOS, and macOS, and builds the documentation.
 - `Package.resolved` is no longer tracked.
-- The minimum supported Swift version is now 6.2.
+- The minimum supported Swift version is now 6.4, which needs Xcode 27 or later.
 
 ### Fixed
 - `@CloudModel(recordType:)` is now used for the schema, the CloudKit record type,

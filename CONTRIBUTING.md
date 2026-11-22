@@ -14,6 +14,8 @@ Screenshots or stack traces make debugging even faster.
 
 ## Ready to Contribute? 🚀
 
+You need Xcode 27 or later (Swift 6.4 or later).
+
 1. **Fork and clone**
    ```bash
    git clone https://github.com/YOUR_USERNAME/CKSwiftData.git

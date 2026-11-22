@@ -152,7 +152,8 @@ public extension CloudPersistentModel where Self: CloudKitModel {
                             optionality: optionality,
                             renamedFrom: renamedFrom,
                             encrypted: attribute.options.contains(.allowsCloudEncryption),
-                            externalStorage: attribute.options.contains(.externalStorage)
+                            externalStorage: attribute.options.contains(.externalStorage),
+                            valueKind: CloudRecordValueKind(arrayAttributeType: attribute.valueType)
                         )
                     )
                 }

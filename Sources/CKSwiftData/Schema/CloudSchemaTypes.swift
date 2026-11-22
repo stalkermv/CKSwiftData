@@ -118,6 +118,10 @@ public struct CloudAttributeSchema: Codable, Hashable, Sendable {
     public let renamedFrom: CloudFieldIdentifier?
     public let encrypted: Bool
     public let externalStorage: Bool
+    /// The boundary kind of the stored value when it is known. It lets a
+    /// decoder recover the element type of an empty array, which CloudKit
+    /// returns without any element to infer it from.
+    public let valueKind: CloudRecordValueKind?
 
     public init(
         id: CloudFieldIdentifier,
@@ -126,7 +130,8 @@ public struct CloudAttributeSchema: Codable, Hashable, Sendable {
         optionality: CloudFieldOptionality = .required,
         renamedFrom: CloudFieldIdentifier? = nil,
         encrypted: Bool = false,
-        externalStorage: Bool = false
+        externalStorage: Bool = false,
+        valueKind: CloudRecordValueKind? = nil
     ) throws {
         if kind == .asset, encrypted {
             throw CloudSchemaError.invalidAttributeOption(id: id, reason: "assets cannot be encrypted")
@@ -141,6 +146,7 @@ public struct CloudAttributeSchema: Codable, Hashable, Sendable {
         self.renamedFrom = renamedFrom
         self.encrypted = encrypted
         self.externalStorage = externalStorage
+        self.valueKind = valueKind
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -151,6 +157,7 @@ public struct CloudAttributeSchema: Codable, Hashable, Sendable {
         case renamedFrom
         case encrypted
         case externalStorage
+        case valueKind
     }
 
     public init(from decoder: Decoder) throws {
@@ -162,7 +169,8 @@ public struct CloudAttributeSchema: Codable, Hashable, Sendable {
             optionality: container.decode(CloudFieldOptionality.self, forKey: .optionality),
             renamedFrom: container.decodeIfPresent(CloudFieldIdentifier.self, forKey: .renamedFrom),
             encrypted: container.decode(Bool.self, forKey: .encrypted),
-            externalStorage: container.decode(Bool.self, forKey: .externalStorage)
+            externalStorage: container.decode(Bool.self, forKey: .externalStorage),
+            valueKind: container.decodeIfPresent(CloudRecordValueKind.self, forKey: .valueKind)
         )
     }
 }
@@ -210,14 +218,13 @@ public enum CloudFieldSchema: Codable, Hashable, Sendable {
         }
     }
 
-    /// The relationship shape is known even when a scalar attribute's
-    /// concrete Swift type is intentionally opaque in the manifest. This is
-    /// enough to decode empty reference arrays without relying on bridged
-    /// `NSArray` runtime casts.
+    /// The relationship shape is always known. A scalar attribute's value kind
+    /// is known when the manifest records it. Together they are enough to
+    /// decode empty arrays without relying on bridged `NSArray` runtime casts.
     var expectedCloudRecordValueKind: CloudRecordValueKind? {
         switch self {
-        case .attribute:
-            nil
+        case let .attribute(attribute):
+            attribute.valueKind
         case let .relationship(relationship):
             relationship.cardinality.isToMany ? .referenceArray : .reference
         }

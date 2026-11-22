@@ -57,6 +57,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- Empty `[String]`, `[Int64]`, `[Double]`, and `[Date]` attributes can be read
+  from CloudKit and written back. The schema records the array kind
+  (`CloudAttributeSchema.valueKind`), so an empty array keeps its type.
 - Saving a fetched model that has an external-storage asset no longer fails when
   you edit another field. An update sends only the changed fields, so the stored
   asset is kept.

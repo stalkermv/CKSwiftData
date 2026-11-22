@@ -67,6 +67,7 @@ extension ModelMacro {
 
         declarations.append(contentsOf: ModelMacro.declarationConfiguration(
             from: node,
+            className: className,
             isPublic: isPublic,
             metadataCacheIsStable: ModelMacro.metadataCacheIsStable(
                 modelAttribute: node,

@@ -12,9 +12,8 @@ extension ModelMacro {
             return false
         }
 
-        guard let recordType = arguments?.first(where: { $0.label?.text == "recordType" })?.expression,
-              isStableStringLiteral(recordType)
-        else {
+        let recordType = arguments?.first(where: { $0.label?.text == "recordType" })?.expression
+        guard recordType == nil || isNilLiteral(recordType) || isStableStringLiteral(recordType) else {
             return false
         }
 

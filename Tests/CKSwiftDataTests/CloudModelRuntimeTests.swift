@@ -53,7 +53,7 @@ final class RawInterpolatedMacroModel {
 }
 
 @CloudModel
-final class ExtensionRecordTypeMacroModel {
+final class OmittedRecordTypeMacroModel {
     var title: String = ""
 }
 
@@ -61,12 +61,6 @@ final class ExtensionRecordTypeMacroModel {
 final class SnapshotApplyMacroModel {
     var title: String = ""
     var note: String?
-}
-
-extension ExtensionRecordTypeMacroModel {
-    static var recordType: String {
-        DynamicMacroLiteralRuntimeConfig.recordType
-    }
 }
 
 private final class DynamicPersistentModel: CloudPersistentModel {
@@ -200,8 +194,12 @@ struct CloudModelRuntimeTests {
     }
 
     @Test
-    func extensionRecordTypeDoesNotOptIntoRuntimeCache() {
-        #expect(ExtensionRecordTypeMacroModel.recordType == "MacroDynamicLiteralOne")
-        #expect(ExtensionRecordTypeMacroModel.cloudModelRuntimeMetadataIsStable == false)
+    func omittedRecordTypeIsTheClassNameAndOptsIntoRuntimeCache() throws {
+        #expect(OmittedRecordTypeMacroModel.recordType == "OmittedRecordTypeMacroModel")
+        #expect(OmittedRecordTypeMacroModel.cloudRecordType == "OmittedRecordTypeMacroModel")
+        #expect(OmittedRecordTypeMacroModel.cloudModelRuntimeMetadataIsStable)
+        let first = try OmittedRecordTypeMacroModel.cloudModelIdentifier()
+        let second = try OmittedRecordTypeMacroModel.cloudModelIdentifier()
+        #expect(first == second)
     }
 }

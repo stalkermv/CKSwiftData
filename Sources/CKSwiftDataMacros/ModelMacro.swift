@@ -97,6 +97,7 @@ public enum ModelMacro: MemberMacro, MemberAttributeMacro, ExtensionMacro {
 
     static func declarationConfiguration(
         from node: AttributeSyntax,
+        className: TokenSyntax,
         isPublic: Bool,
         metadataCacheIsStable: Bool
     ) -> [DeclSyntax] {
@@ -117,18 +118,19 @@ public enum ModelMacro: MemberMacro, MemberAttributeMacro, ExtensionMacro {
             """
         ]
 
-        if let recordType = arguments?.first(where: { $0.label?.text == "recordType" })?
-            .expression.description,
-            recordType != "nil"
-        {
-            declarations.append(
-                """
-                \(raw: access)static var recordType: String {
-                    \(raw: recordType)
-                }
-                """
-            )
-        }
+        // Without an explicit record type the class name is used. It is
+        // generated as a literal so that the runtime can cache the schema.
+        let explicitRecordType = arguments?.first(where: { $0.label?.text == "recordType" })?
+            .expression.description
+        let recordType = explicitRecordType.flatMap { $0 == "nil" ? nil : $0 }
+            ?? "\"\(className.text)\""
+        declarations.append(
+            """
+            \(raw: access)static var recordType: String {
+                \(raw: recordType)
+            }
+            """
+        )
         declarations.append(
             """
             \(raw: access)static var cloudRecordType: String {

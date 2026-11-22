@@ -16,16 +16,14 @@ concurrency:
 jobs:
   swift-test:
     name: Swift Test
-    runs-on: macos-15
+    runs-on: xcode-27
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.2"
+      - name: Select Xcode 27.2
+        run: sudo xcode-select -s /Applications/Xcode_27.2.app
 
       - name: Show Swift version
         run: swift --version
@@ -44,16 +42,14 @@ jobs:
 
   documentation:
     name: DocC Build Check
-    runs-on: macos-15
+    runs-on: xcode-27
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.2"
+      - name: Select Xcode 27.2
+        run: sudo xcode-select -s /Applications/Xcode_27.2.app
 
       - name: Build documentation
         run: |
@@ -66,7 +62,7 @@ jobs:
 
   apple-platforms:
     name: Compile for ${{ matrix.destination }}
-    runs-on: macos-15
+    runs-on: xcode-27
     strategy:
       fail-fast: false
       matrix:
@@ -80,10 +76,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.2"
+      - name: Select Xcode 27.2
+        run: sudo xcode-select -s /Applications/Xcode_27.2.app
 
       - name: Resolve dependencies
         run: swift package resolve

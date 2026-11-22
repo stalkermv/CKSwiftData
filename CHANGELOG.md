@@ -50,7 +50,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `@CloudModel` uses the class name as the record type when `recordType:` is
   omitted, and the schema cache stays enabled for such models.
 - CI now builds and tests with complete strict concurrency checking, compiles
-  the package for iOS, tvOS, watchOS, and macOS, and builds the documentation.
+  the package for iOS, tvOS, watchOS, and macOS, and builds the documentation,
+  all on the Xcode 27 runner image.
 - `Package.resolved` is no longer tracked.
 - The minimum supported Swift version is now 6.4, which needs Xcode 27 or later.
 - The macro target depends on swift-syntax 604 or later.

@@ -57,6 +57,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- Fetching with a desired field that is not in the schema throws
+  `CloudModelError.invalidRequest` for every client. The in-memory client no
+  longer returns an empty projection.
 - `CloudJSONRecordValueCodec` writes dictionary keys in sorted order, so equal
   values always encode to the same bytes.
 - `@CloudModel(recordType:)` is now used for the schema, the CloudKit record type,

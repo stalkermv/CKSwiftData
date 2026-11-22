@@ -26,8 +26,15 @@ public actor CloudKitRecordStore {
         _ request: CloudRecordFetchRequest,
         retryPolicy: CloudRetryPolicy
     ) async throws -> CloudRecordPage {
-        guard schema.model(request.modelID) != nil else {
+        guard let model = schema.model(request.modelID) else {
             throw CloudContextError.unknownModel(request.modelID)
+        }
+        // Reject unknown fields here so every client reports the same error
+        // instead of silently returning an empty projection.
+        for field in request.desiredFields.sorted() where model.field(field) == nil {
+            throw CloudModelError.invalidRequest(
+                "desired field \(field.rawValue) is not present in the schema"
+            )
         }
         return try await performWithRetry(retryPolicy) {
             try await self.client.fetch(request)

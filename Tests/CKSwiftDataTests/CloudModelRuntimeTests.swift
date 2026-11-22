@@ -193,6 +193,13 @@ struct CloudModelRuntimeTests {
     }
 
     @Test
+    func dynamicRecordTypeIsUsedForTheRuntimeRecordType() throws {
+        DynamicMacroLiteralRuntimeConfig.setRecordType("MacroDynamicLiteralOne")
+        #expect(DynamicMemberMacroModel.cloudRecordType == "MacroDynamicLiteralOne")
+        #expect(try DynamicMemberMacroModel.cloudModelIdentifier().rawValue == "MacroDynamicLiteralOne")
+    }
+
+    @Test
     func extensionRecordTypeDoesNotOptIntoRuntimeCache() {
         #expect(ExtensionRecordTypeMacroModel.recordType == "MacroDynamicLiteralOne")
         #expect(ExtensionRecordTypeMacroModel.cloudModelRuntimeMetadataIsStable == false)

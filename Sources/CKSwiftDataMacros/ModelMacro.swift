@@ -129,6 +129,13 @@ public enum ModelMacro: MemberMacro, MemberAttributeMacro, ExtensionMacro {
                 """
             )
         }
+        declarations.append(
+            """
+            \(raw: access)static var cloudRecordType: String {
+                recordType
+            }
+            """
+        )
         return declarations
     }
 

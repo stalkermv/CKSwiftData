@@ -38,7 +38,7 @@ extension ModelMacro {
                     argument.label == nil ? argument.expression.description : nil
                 } ?? []
                 let destination = ModelMacro.relationshipDestination(from: typeText)
-                let destinationArgument = destination.map { "\"\($0)\"" } ?? "\"\""
+                let destinationArgument = destination.map { "\($0).recordType" } ?? "\"\""
                 let originalName = arguments?.first { $0.label?.text == "originalName" }?
                     .expression.description ?? "nil"
                 let deleteRule = arguments?.first { $0.label?.text == "deleteRule" }?

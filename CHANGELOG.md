@@ -57,6 +57,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- `CloudJSONRecordValueCodec` writes dictionary keys in sorted order, so equal
+  values always encode to the same bytes.
 - `@CloudModel(recordType:)` is now used for the schema, the CloudKit record type,
   and the destination of relationships. Before, the class name was used.
 - Temporary files for legacy `@Attribute(.externalStorage)` assets now use a

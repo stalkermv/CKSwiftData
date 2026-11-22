@@ -99,7 +99,11 @@ public struct CloudJSONRecordValueCodec<Value: Codable & Sendable>: CloudRecordV
 
     public func encode(_ value: Value) throws -> CloudRecordValue {
         do {
-            return try .data(JSONEncoder().encode(value))
+            let encoder = JSONEncoder()
+            // Sorted keys keep the bytes of equal values identical across
+            // processes, because dictionary order is not stable.
+            encoder.outputFormatting = [.sortedKeys]
+            return try .data(encoder.encode(value))
         } catch {
             throw CloudValueCodecError.encodingFailed(String(describing: error))
         }

@@ -22,6 +22,29 @@ struct CloudValueCodecTests {
     }
 
     @Test
+    func jsonCodecWritesDictionaryKeysInSortedOrder() throws {
+        let codec = CloudJSONRecordValueCodec<[String: Int]>()
+        let keys = (0 ..< 40).map { String(format: "key%02d", $0) }
+        var shuffled = [String: Int]()
+        for (index, key) in keys.reversed().enumerated() {
+            shuffled[key] = index
+        }
+        var ordered = [String: Int]()
+        for (index, key) in keys.enumerated() {
+            ordered[key] = 39 - index
+        }
+
+        let first = try codec.encode(shuffled)
+        let second = try codec.encode(ordered)
+        let expected = "{" + keys.enumerated()
+            .map { "\"\($0.element)\":\(39 - $0.offset)" }
+            .joined(separator: ",") + "}"
+
+        #expect(first == second)
+        #expect(first == .data(Data(expected.utf8)))
+    }
+
+    @Test
     func jsonCodecRejectsNonDataRecordValues() throws {
         let codec = CloudJSONRecordValueCodec<Payload>()
 

@@ -79,7 +79,10 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
             }
         }
 
-        if let value = record[property.name] as? CKRecordValueProtocol {
+        if let value = record.storedValue(
+            forKey: property.name,
+            encrypted: property.isEncryptedAttribute
+        ) as? CKRecordValueProtocol {
             return requireValue(value, named: property.name)
         } else {
             return requireValue(property.defaultValue, named: property.name)
@@ -88,7 +91,10 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
 
     func getValue<Value>(forKey keyPath: KeyPath<T, Value?>) -> Value? where Value: CKRecordValueProtocol, Value: Decodable {
         let property = findProperty(forKey: keyPath)
-        if let value = record[property.name] as? CKRecordValueProtocol {
+        if let value = record.storedValue(
+            forKey: property.name,
+            encrypted: property.isEncryptedAttribute
+        ) as? CKRecordValueProtocol {
             return value as? Value
         } else {
             return nil
@@ -166,14 +172,22 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
                 preconditionFailure("Could not stage asset for property '\(property.name)' of \(T.self): \(error)")
             }
         } else {
-            record[property.name] = newValue
+            record.setStoredValue(
+                newValue,
+                forKey: property.name,
+                encrypted: property.isEncryptedAttribute
+            )
         }
         boundaryValues.removeValue(forKey: property.name)
     }
 
     func setValue<Value>(forKey keyPath: KeyPath<T, Value?>, to newValue: Value?) where Value: CKRecordValueProtocol, Value: Encodable {
         let property = findProperty(forKey: keyPath)
-        record[property.name] = newValue
+        record.setStoredValue(
+            newValue,
+            forKey: property.name,
+            encrypted: property.isEncryptedAttribute
+        )
         boundaryValues.removeValue(forKey: property.name)
     }
 

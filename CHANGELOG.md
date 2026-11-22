@@ -57,6 +57,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- Attributes declared with `.allowsCloudEncryption` are read from and written to
+  the encrypted record fields by the legacy `CKDatabase.save(_:)` and
+  `records(of:matching:)` helpers. They were written as plain values before.
 - Empty `[String]`, `[Int64]`, `[Double]`, and `[Date]` attributes can be read
   from CloudKit and written back. The schema records the array kind
   (`CloudAttributeSchema.valueKind`), so an empty array keeps its type.

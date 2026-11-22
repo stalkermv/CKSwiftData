@@ -230,7 +230,10 @@ public extension CloudPersistentModel where Self: CloudKitModel {
         let modelSchema = try Self.cloudModelSchema()
         var fields = [CloudFieldIdentifier: CloudRecordValue]()
         for field in modelSchema.fields {
-            if let rawValue = backing.record[field.recordName.rawValue] {
+            if let rawValue = backing.record.storedValue(
+                forKey: field.recordName.rawValue,
+                encrypted: field.isEncrypted
+            ) {
                 fields[field.id] = try CloudRecordValue(
                     cloudKitValue: rawValue,
                     fieldID: field.id,
@@ -271,18 +274,28 @@ public extension CloudPersistentModel where Self: CloudKitModel {
                 // Keep the remote-safe reference until the caller explicitly
                 // materializes bytes and supplies an upload lease.
                 backing.boundaryValues[field.recordName.rawValue] = value
-                backing.record[field.recordName.rawValue] = nil
+                backing.record.setStoredValue(
+                    nil,
+                    forKey: field.recordName.rawValue,
+                    encrypted: field.isEncrypted
+                )
             } else {
                 backing.boundaryValues.removeValue(forKey: field.recordName.rawValue)
-                backing.record[field.recordName.rawValue] = try value.cloudKitValue(
-                    fieldID: field.id
+                try backing.record.setStoredValue(
+                    value.cloudKitValue(fieldID: field.id),
+                    forKey: field.recordName.rawValue,
+                    encrypted: field.isEncrypted
                 )
             }
         }
         if snapshot.isPartial == false {
             for field in modelSchema.fields where snapshot.fields[field.id] == nil {
                 backing.boundaryValues.removeValue(forKey: field.recordName.rawValue)
-                backing.record[field.recordName.rawValue] = nil
+                backing.record.setStoredValue(
+                    nil,
+                    forKey: field.recordName.rawValue,
+                    encrypted: field.isEncrypted
+                )
             }
         }
     }

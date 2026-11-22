@@ -19,7 +19,7 @@ extension ModelMacro {
                 return nil
             }
 
-            let typeText = property.bindings.first?.typeAnnotation?.type.description
+            let typeText = property.bindings.first?.typeAnnotation?.type.trimmedDescription
             let defaultValue: String = if let initExpr = property.bindings.first?.initializer?.value {
                 initExpr.description
             } else if let typeText, typeText.hasSuffix("?") {

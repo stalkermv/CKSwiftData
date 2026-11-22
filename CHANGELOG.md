@@ -57,6 +57,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- A property such as `var nickname: String? = "nick"` is an optional field. It
+  was treated as required before, so clearing it blocked the insert.
 - Attributes declared with `.allowsCloudEncryption` are read from and written to
   the encrypted record fields by the legacy `CKDatabase.save(_:)` and
   `records(of:matching:)` helpers. They were written as plain values before.

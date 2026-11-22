@@ -129,6 +129,13 @@ marks the resulting baseline partial; a typed full-model save therefore requires
 one full refresh first. Low-level `CloudRecordMutation` writes remain safe because
 they send only their explicit values/removals.
 
+A `desiredFields` entry that is not in the schema is rejected with
+`CloudModelError.invalidRequest` before the client is called, so every client
+behaves the same. A typed save of a fetched record sends only the fields that
+changed, and fields the server already has, such as stored assets, are kept.
+Deleting a record that was inserted but never saved discards it locally and
+sends no remote delete.
+
 Bound model setters are captured against the clean baseline across a subsequent
 typed fetch or non-discarding refresh, including edits made while the async
 request is in flight, so an unsaved local edit is not overwritten by the server

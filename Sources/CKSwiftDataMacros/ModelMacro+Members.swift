@@ -62,7 +62,7 @@ extension ModelMacro {
         )
 
         if hasUserInitializers == false {
-            declarations.append(ModelMacro.defaultInitializer(className, isPublic: isPublic))
+            declarations.append(ModelMacro.defaultInitializer(className, properties: properties, isPublic: isPublic))
         }
 
         declarations.append(contentsOf: ModelMacro.declarationConfiguration(

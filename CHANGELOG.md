@@ -57,6 +57,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- Default values of model properties (`var title: String = ""`,
+  `var created: Date = .now`) are written when you create a model with `init()`,
+  so an insert no longer fails with a missing required field when you do not
+  assign them. Defaults written as implicit members, such as `.now`, compile.
 - A property such as `var nickname: String? = "nick"` is an optional field. It
   was treated as required before, so clearing it blocked the insert.
 - Attributes declared with `.allowsCloudEncryption` are read from and written to

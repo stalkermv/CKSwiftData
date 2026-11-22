@@ -35,6 +35,10 @@ final class Folder {
 }
 ```
 
+A property takes its default value when you create the model, so you only assign
+what differs. A property without a default value, and without an optional type,
+must be assigned before you insert the model.
+
 ## Assemble a container
 
 A ``CloudModelContainer`` ties a validated ``CloudSchema``, a

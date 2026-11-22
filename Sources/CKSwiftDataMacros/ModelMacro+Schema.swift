@@ -21,7 +21,10 @@ extension ModelMacro {
 
             let typeText = property.bindings.first?.typeAnnotation?.type.trimmedDescription
             let defaultValue: String = if let initExpr = property.bindings.first?.initializer?.value {
-                initExpr.description
+                // The cast gives implicit members such as `.now` or `.init()` a
+                // type to resolve against.
+                typeText.map { "(\(initExpr.trimmedDescription) as \($0))" }
+                    ?? initExpr.trimmedDescription
             } else if let typeText, typeText.hasSuffix("?") {
                 "Optional<\(String(typeText.dropLast()))>.none"
             } else {

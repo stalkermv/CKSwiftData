@@ -26,6 +26,17 @@ selection. Persisted members are stored properties with explicit types. Static,
 computed, lazy, weak, custom-accessor, unsupported, and ambiguous members are
 diagnosed at the declaration site.
 
+### Default values
+
+A stored property of a `@CloudModel` class with a declared default value takes
+that value when the model is created with the generated `init()`. The default is
+evaluated once, at creation, and is written to the record when the model is
+inserted. Relationships and `@Transient` properties are not part of this. A
+required property without a default value is not filled in, so inserting a model
+without assigning it fails with `CloudModelError.invalidRequest`. A model that
+declares its own initializer does not get the generated `init()` and assigns its
+properties itself.
+
 ### Record types
 
 The record type of a model is the `recordType:` argument of `@CloudModel`. When

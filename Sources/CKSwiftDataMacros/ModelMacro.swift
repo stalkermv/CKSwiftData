@@ -85,14 +85,41 @@ public enum ModelMacro: MemberMacro, MemberAttributeMacro, ExtensionMacro {
 
     static func defaultInitializer(
         _ className: TokenSyntax,
+        properties: [VariableDeclSyntax],
         isPublic: Bool
     ) -> DeclSyntax {
         let access = isPublic ? "public " : ""
+        let assignments = defaultAssignments(for: properties)
         return """
         \(raw: access)convenience init() {
             self.init(backingData: \(raw: className).createBackingData())
+            \(raw: assignments)
         }
         """
+    }
+
+    /// Assigns the declared default of every persisted property when a model
+    /// is created, so the defaults are part of the record like they are part of
+    /// any Swift object. A default is evaluated once, at creation.
+    static func defaultAssignments(for properties: [VariableDeclSyntax]) -> String {
+        properties.compactMap { property -> String? in
+            guard property.bindingSpecifier.tokenKind == .keyword(.var),
+                  property.hasMacroApplication(named: TransientPropertyMacro.name) == false,
+                  property.hasMacroApplication(named: RelationshipMacro.name) == false,
+                  property.modifiers.contains(where: {
+                      $0.name.tokenKind == .keyword(.static) || $0.name.tokenKind == .keyword(.class)
+                  }) == false,
+                  property.bindings.count == 1,
+                  let binding = property.bindings.first,
+                  binding.accessorBlock == nil,
+                  let identifier = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier,
+                  let value = binding.initializer?.value
+            else {
+                return nil
+            }
+            return "self.\(identifier.text) = \(value.trimmedDescription)"
+        }
+        .joined(separator: "\n")
     }
 
     static func declarationConfiguration(

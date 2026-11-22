@@ -53,6 +53,7 @@ final class Folder {
 @CloudModel
 final class Note {
     var text: String = ""
+    var created: Date = .now
     @Relationship var folder: Folder?
 }
 
@@ -96,6 +97,8 @@ func run() async throws {
     print("Fetched \(page.models.count) folders")
 }
 ```
+
+A property takes its default value when you create the model, so you only assign what differs. In the example, `note.created` is the time of creation. A property without a default value must be assigned before you insert the model.
 
 The record type is the class name. To use another name, write `@CloudModel(recordType: "Folder")`. Set it explicitly for models that are already in production: renaming the class changes the record type in CloudKit.
 

@@ -35,6 +35,17 @@ Uploads use an explicit ``CloudAssetStager`` lease and the
 ``CloudKitDatabaseClient`` asset overload. A model getter never performs an
 implicit download.
 
+## Default values
+
+A stored property with a default value (`var created: Date = .now`) takes that
+value when you create the model with `init()`, and the value is saved with the
+record. A default is evaluated once, at creation. Assign a property to replace
+its default. A property that has no default value and is not optional must be
+assigned before the model is inserted, otherwise the insert fails with a missing
+field error.
+
+A model with its own initializer must assign its persisted properties there.
+
 ## Record types
 
 The CloudKit record type of a model is the name of its class. Pass `recordType:`

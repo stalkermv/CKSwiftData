@@ -693,11 +693,24 @@ public final class CloudModelContext {
             case .detached, .deleted:
                 continue
             }
+            var mutationValues = values
+            if case .update = policy {
+                // An update sends only what changed. Resending an untouched
+                // remote asset would require a fresh upload for it, and the
+                // server keeps every field that is not mentioned.
+                let uploaded = Set(
+                    assets.keys.filter { $0.recordID == id }.map(\.fieldID)
+                )
+                let currentFields = current?.fields ?? [:]
+                mutationValues = values.filter {
+                    uploaded.contains($0.key) || currentFields[$0.key] != $0.value
+                }
+            }
             try recordContext.stage(
                 CloudRecordMutation(
                     id: id,
                     modelID: snapshot.modelID,
-                    values: values,
+                    values: mutationValues,
                     removedFields: removedFields,
                     policy: policy
                 )

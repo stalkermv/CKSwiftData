@@ -57,6 +57,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- Saving a fetched model that has an external-storage asset no longer fails when
+  you edit another field. An update sends only the changed fields, so the stored
+  asset is kept.
 - Deleting a record that was inserted but not yet saved discards it locally
   instead of sending a remote delete that fails the whole save.
 - Fetching with a desired field that is not in the schema throws

@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `@Relationship(inverse:)` takes a key path such as `\TodoItem.project` on one
+  side of a relationship. `CloudSchema` infers the inverse of the other side and
+  rejects an inverse that two relationships claim
+  (`CloudSchemaError.ambiguousInverse`). `inverseName:` still works.
 - Typed CloudKit identities (container, zone, record, and model identifiers)
   and immutable, validated schema manifests with deterministic `Codable`
   encoding.
@@ -42,14 +46,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 - Rewrote the `@CloudModel`, `@Attribute`, and `@Relationship` macros to
-  generate typed storage and schema metadata. `@Relationship` takes an
-  `inverseName` for cross-model declarations.
+  generate typed storage and schema metadata.
+- `@CloudModel` uses the class name as the record type when `recordType:` is
+  omitted, and the schema cache stays enabled for such models.
 - CI now builds and tests with complete strict concurrency checking, compiles
   the package for iOS, tvOS, watchOS, and macOS, and builds the documentation.
 - `Package.resolved` is no longer tracked.
 - The minimum supported Swift version is now 6.2.
 
 ### Fixed
+- `@CloudModel(recordType:)` is now used for the schema, the CloudKit record type,
+  and the destination of relationships. Before, the class name was used.
 - Temporary files for legacy `@Attribute(.externalStorage)` assets now use a
   unique location per write, so repeated or concurrent writes no longer
   overwrite each other. Encoding and write failures stop with a descriptive

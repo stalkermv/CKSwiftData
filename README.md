@@ -42,10 +42,18 @@ targets: [
 import CKSwiftData
 import CloudKit
 
-@CloudModel(recordType: "Folder", schemaVersion: 1)
+@CloudModel(schemaVersion: 1)
 final class Folder {
     var title: String = ""
     var color: String?
+    @Relationship(deleteRule: .cascade, inverse: \Note.folder)
+    var notes: [Note] = []
+}
+
+@CloudModel
+final class Note {
+    var text: String = ""
+    @Relationship var folder: Folder?
 }
 
 @MainActor
@@ -54,7 +62,10 @@ func run() async throws {
         containerIdentifier: try CloudContainerIdentifier("iCloud.com.example.App"),
         location: .privateDatabase(.default)
     )
-    let schema = try CloudSchema(models: [Folder.cloudModelSchema()])
+    let schema = try CloudSchema(models: [
+        Folder.cloudModelSchema(),
+        Note.cloudModelSchema()
+    ])
     let database = CKContainer(identifier: configuration.containerIdentifier.rawValue)
         .privateCloudDatabase
     let client = try CloudKitDatabaseClient(
@@ -69,10 +80,14 @@ func run() async throws {
     )
     let context = container.mainContext
 
-    // Save a new folder.
+    // Save a new folder with a note.
     let folder = Folder()
     folder.title = "My Ideas"
+    let note = Note()
+    note.text = "Write a README"
+    note.folder = folder
     try context.insert(folder)
+    try context.insert(note)
     let result = try await context.save()
     print("Failed records: \(result.failures.count)")
 
@@ -81,6 +96,10 @@ func run() async throws {
     print("Fetched \(page.models.count) folders")
 }
 ```
+
+The record type is the class name. To use another name, write `@CloudModel(recordType: "Folder")`. Set it explicitly for models that are already in production: renaming the class changes the record type in CloudKit.
+
+Name the inverse of a relationship on one side only, with a key path such as `\Note.folder`. The other side is filled in for you. If you put a key path on both sides, the compiler reports a circular reference. You can also name both sides with strings: `@Relationship(inverseName: "folder")`.
 
 ## Testing
 

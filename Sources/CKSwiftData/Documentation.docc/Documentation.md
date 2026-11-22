@@ -21,7 +21,7 @@ The library keeps the remote boundary explicit:
 ```swift
 import CKSwiftData
 
-@CloudModel(recordType: "Folder", schemaVersion: 1)
+@CloudModel(schemaVersion: 1)
 final class Folder {
     var title: String = ""
     var color: String?

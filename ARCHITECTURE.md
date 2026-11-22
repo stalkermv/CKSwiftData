@@ -68,6 +68,10 @@ Schema validation happens before a CloudKit request and rejects:
 - cross-store or cross-zone relationships;
 - renames without an explicit migration identity.
 
+When only one relationship of a pair names its inverse, the schema infers the
+other side before it validates. A field that two relationships name as their
+inverse is ambiguous and rejected.
+
 The manifest distinguishes scalar, encoded, asset, to-one, and to-many fields.
 It records destination model, inverse identity, optionality, bounds, ordering,
 delete rule, and migration aliases. It must not depend on `Any.Type` or runtime

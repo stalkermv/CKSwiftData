@@ -7,13 +7,13 @@ verification.
 ## Model declaration surface
 
 ```swift
-@CloudModel(recordType: "Project", schemaVersion: 1)
+@CloudModel(schemaVersion: 1)
 @MainActor
 final class Project {
     @Attribute(.allowsCloudEncryption, originalName: "name")
     var title: String
 
-    @Relationship(deleteRule: .cascade, inverseName: "project")
+    @Relationship(deleteRule: .cascade, inverse: \TodoItem.project)
     var tasks: [TodoItem] = []
 
     @Transient
@@ -25,6 +25,36 @@ The macros must generate typed storage and diagnostics, not generic overload
 selection. Persisted members are stored properties with explicit types. Static,
 computed, lazy, weak, custom-accessor, unsupported, and ambiguous members are
 diagnosed at the declaration site.
+
+### Record types
+
+The record type of a model is the `recordType:` argument of `@CloudModel`. When
+the argument is omitted, the record type is the name of the class. It is used
+for the schema model identifier, for `CloudModelSchema.recordType`, for the
+CloudKit record type, and as the destination of relationships that point at the
+model. Renaming a class that omits `recordType:` therefore changes its CloudKit
+record type, so models that are already deployed must declare `recordType:`
+explicitly.
+
+A model may pass a dynamic expression as `recordType:`. Such a model does not
+use the runtime schema cache. Overriding `recordType` in an extension is not
+supported.
+
+### Relationship inverses
+
+`@Relationship` names its inverse with either `inverse:` (a key path literal
+such as `\TodoItem.project`) or `inverseName:` (a property name). The key path
+must start at the destination type and name one property; the macro rejects
+other forms. `inverseName` takes precedence when both are given.
+
+One side of a pair is enough. When only one relationship names its inverse,
+`CloudSchema` sets the inverse of the other side before it validates the
+relationships. Validation then requires that the inverse exists, is a
+relationship, points back at the declaring model, and names the declaring
+relationship. A field that two relationships name as their inverse throws
+`CloudSchemaError.ambiguousInverse`. Writing a key path on both sides is not
+possible: the compiler reports a circular reference while it expands the
+macros.
 
 ## Required public types
 

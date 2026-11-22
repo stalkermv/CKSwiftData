@@ -21,13 +21,14 @@ targets: [
 ## Declare a model
 
 Annotate a class with `@CloudModel`. Persisted members are stored properties
-with explicit types.
+with explicit types. The CloudKit record type is the class name unless you pass
+`recordType:`.
 
 ```swift
 import CKSwiftData
 import CloudKit
 
-@CloudModel(recordType: "Folder", schemaVersion: 1)
+@CloudModel(schemaVersion: 1)
 final class Folder {
     var title: String = ""
     var color: String?

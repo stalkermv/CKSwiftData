@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the package for iOS, tvOS, watchOS, and macOS, and builds the documentation.
 - `Package.resolved` is no longer tracked.
 - The minimum supported Swift version is now 6.4, which needs Xcode 27 or later.
+- The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
 - `@CloudModel(recordType:)` is now used for the schema, the CloudKit record type,

@@ -36,7 +36,13 @@ let package = Package(
         ),
         .testTarget(
             name: "CKSwiftDataTests",
-            dependencies: ["CKSwiftData"]
+            dependencies: [
+                "CKSwiftData",
+                "CKSwiftDataMacros",
+                .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax")
+            ]
         ),
         .testTarget(
             name: "CKSwiftDataPerformanceTests",

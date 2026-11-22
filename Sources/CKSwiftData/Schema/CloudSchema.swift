@@ -70,7 +70,7 @@ public struct CloudSchema: Codable, Hashable, Sendable {
             }
         }
 
-        let orderedModels = models.sorted { $0.id < $1.id }
+        let orderedModels = try Self.completingInverses(in: models.sorted { $0.id < $1.id })
         let modelsByID = Dictionary(uniqueKeysWithValues: orderedModels.map { ($0.id, $0) })
         try Self.validateRelationships(in: orderedModels, modelsByID: modelsByID)
 
@@ -87,6 +87,70 @@ public struct CloudSchema: Codable, Hashable, Sendable {
         let version = try container.decode(Int.self, forKey: .version)
         let models = try container.decode([CloudModelSchema].self, forKey: .models)
         try self.init(version: version, models: models)
+    }
+
+    /// Fills in a missing inverse when the other side of a relationship pair
+    /// names it, so only one side of a pair has to declare the inverse.
+    ///
+    /// A field that more than one relationship names as its inverse is
+    /// ambiguous and is rejected. A field that names a different inverse, or
+    /// that does not point back at the declaring model, is left unchanged so
+    /// that validation reports the mismatch.
+    private static func completingInverses(in models: [CloudModelSchema]) throws -> [CloudModelSchema] {
+        struct Claimer {
+            let model: CloudModelIdentifier
+            let field: CloudFieldIdentifier
+        }
+        var claims: [CloudModelIdentifier: [CloudFieldIdentifier: [Claimer]]] = [:]
+        for model in models {
+            for case let .relationship(relationship) in model.fields {
+                guard let inverse = relationship.inverse else { continue }
+                claims[relationship.destination, default: [:]][inverse, default: []]
+                    .append(Claimer(model: model.id, field: relationship.id))
+            }
+        }
+        guard claims.isEmpty == false else { return models }
+
+        return try models.map { model in
+            var fields: [CloudFieldSchema] = []
+            var changed = false
+            for field in model.fields {
+                guard case let .relationship(relationship) = field,
+                      relationship.inverse == nil,
+                      let claimers = claims[model.id]?[relationship.id]
+                else {
+                    fields.append(field)
+                    continue
+                }
+                guard claimers.count == 1, let claimer = claimers.first else {
+                    throw CloudSchemaError.ambiguousInverse(model.id, relationship.id)
+                }
+                guard relationship.destination == claimer.model else {
+                    fields.append(field)
+                    continue
+                }
+                fields.append(
+                    .relationship(
+                        CloudRelationshipSchema(
+                            id: relationship.id,
+                            recordName: relationship.recordName,
+                            destination: relationship.destination,
+                            inverse: claimer.field,
+                            cardinality: relationship.cardinality,
+                            deleteRule: relationship.deleteRule
+                        )
+                    )
+                )
+                changed = true
+            }
+            guard changed else { return model }
+            return try CloudModelSchema(
+                id: model.id,
+                recordType: model.recordType,
+                version: model.version,
+                fields: fields
+            )
+        }
     }
 
     private static func validateRelationships(

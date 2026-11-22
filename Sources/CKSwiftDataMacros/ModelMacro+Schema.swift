@@ -1,3 +1,4 @@
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
@@ -53,7 +54,9 @@ extension ModelMacro {
                     .map { ModelMacro.stringLiteralValue(from: $0.expression.description) }
                 let inverseName = explicitInverseName ?? arguments?.first {
                     $0.label?.text == "inverse"
-                }.map { ModelMacro.inverseName(from: $0.expression.description) }
+                }.flatMap {
+                    ModelMacro.inverseName(from: $0, destination: destination, in: context)
+                }
                 let inverseArgument = inverseName.map { "\"\($0)\"" } ?? "nil"
                 let optionsArgument = options.isEmpty ? "[]" : "[\(options.joined(separator: ", "))]"
                 metadata = """
@@ -127,8 +130,58 @@ extension ModelMacro {
         return value.split(separator: ".").last.map(String.init)
     }
 
-    static func inverseName(from expression: String) -> String {
-        expression.split(separator: ".").last.map(String.init) ?? expression
+    /// Reads the inverse property name from an `inverse:` key path such as
+    /// `\TodoItem.project`. The key path must start at the relationship's
+    /// destination type and name exactly one property.
+    static func inverseName(
+        from argument: LabeledExprSyntax,
+        destination: String?,
+        in context: some MacroExpansionContext
+    ) -> String? {
+        if argument.expression.is(NilLiteralExprSyntax.self) {
+            return nil
+        }
+        guard let keyPath = argument.expression.as(KeyPathExprSyntax.self) else {
+            context.diagnose(
+                Diagnostic(
+                    node: Syntax(argument.expression),
+                    message: ModelMacroDiagnostic(
+                        message: "The inverse must be a key path literal such as \\TodoItem.project",
+                        messageID: "inverse-key-path-literal"
+                    )
+                )
+            )
+            return nil
+        }
+        let properties = keyPath.components.compactMap { $0.component.as(KeyPathPropertyComponentSyntax.self) }
+        guard keyPath.components.count == 1, let property = properties.first else {
+            context.diagnose(
+                Diagnostic(
+                    node: Syntax(keyPath),
+                    message: ModelMacroDiagnostic(
+                        message: "The inverse key path must name exactly one property",
+                        messageID: "inverse-key-path-single-property"
+                    )
+                )
+            )
+            return nil
+        }
+        if let destination, let root = keyPath.root {
+            let rootName = root.trimmedDescription.split(separator: ".").last.map(String.init)
+            if rootName != destination {
+                context.diagnose(
+                    Diagnostic(
+                        node: Syntax(root),
+                        message: ModelMacroDiagnostic(
+                            message: "The inverse key path must start at the destination type '\(destination)'",
+                            messageID: "inverse-key-path-root"
+                        )
+                    )
+                )
+                return nil
+            }
+        }
+        return property.declName.baseName.text
     }
 
     static func stringLiteralValue(from expression: String) -> String {

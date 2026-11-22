@@ -72,11 +72,21 @@ extension ModelMacro {
             case "originalName", "inverseName", "hashModifier":
                 isStableOptionalString(argument.expression)
             case "inverse":
-                isNilLiteral(argument.expression)
+                isNilLiteral(argument.expression) || isStableInverseKeyPath(argument.expression)
             default:
                 false
             }
         }
+    }
+
+    private static func isStableInverseKeyPath(_ expression: ExprSyntax) -> Bool {
+        guard let keyPath = expression.as(KeyPathExprSyntax.self),
+              keyPath.root != nil,
+              keyPath.components.count == 1
+        else {
+            return false
+        }
+        return keyPath.components.first?.component.is(KeyPathPropertyComponentSyntax.self) == true
     }
 
     private static func isStableStringLiteral(_ expression: ExprSyntax?) -> Bool {

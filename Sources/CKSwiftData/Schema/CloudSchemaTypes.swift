@@ -12,6 +12,7 @@ public enum CloudSchemaError: Error, Equatable, Sendable {
     case unknownRelationshipDestination(CloudModelIdentifier, CloudFieldIdentifier, CloudModelIdentifier)
     case unknownInverse(CloudModelIdentifier, CloudFieldIdentifier, CloudFieldIdentifier)
     case inverseMismatch(CloudModelIdentifier, CloudFieldIdentifier, CloudModelIdentifier)
+    case ambiguousInverse(CloudModelIdentifier, CloudFieldIdentifier)
 }
 
 public enum CloudAttributeKind: String, Codable, Hashable, Sendable {

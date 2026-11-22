@@ -81,6 +81,9 @@ public final class CloudModelContext {
     public func delete<Model: CloudPersistentModel>(_ model: Model) throws {
         let id = try model.cloudRecordIdentifier(in: zone)
         try recordContext.delete(id)
+        if recordContext.state(for: id) == .detached {
+            models.removeValue(forKey: id)
+        }
     }
 
     public func fetch<Model: CloudPersistentModel>(

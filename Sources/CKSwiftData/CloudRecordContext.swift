@@ -269,9 +269,15 @@ public final class CloudRecordContext {
     }
 
     /// Marks a tracked record for deletion. The deletion is sent by `save`.
+    /// A record that was inserted but never saved does not exist remotely, so
+    /// it is discarded locally and no remote delete is staged.
     public func delete(_ id: CloudRecordIdentifier) throws {
         guard snapshots[id] != nil || (states[id] != nil && states[id] != .detached) else {
             throw CloudContextError.cannotDiscardUntrackedRecord(id)
+        }
+        if states[id] == .inserted, baselines[id] == nil {
+            discardChanges(for: id)
+            return
         }
         stagedMutations.removeValue(forKey: id)
         stagedDeletes.insert(id)

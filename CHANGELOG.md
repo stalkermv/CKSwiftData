@@ -57,6 +57,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The macro target depends on swift-syntax 604 or later.
 
 ### Fixed
+- Deleting a record that was inserted but not yet saved discards it locally
+  instead of sending a remote delete that fails the whole save.
 - Fetching with a desired field that is not in the schema throws
   `CloudModelError.invalidRequest` for every client. The in-memory client no
   longer returns an empty projection.

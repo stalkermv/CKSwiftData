@@ -7,6 +7,13 @@ Describe fields, relationships, and schema metadata with macros.
 Stored properties of a `@CloudModel` class are persisted. Use `@Attribute` to
 adjust a field, and `@Transient` to keep a property out of the record.
 
+A persisted property is a `var` with one name and an explicit type. The macro
+reports any other member of the class at its declaration: static and class
+properties, computed properties, `lazy`, `weak`, and `unowned` properties, `let`
+constants, properties with their own accessors or observers, and declarations of
+several properties at once. Mark such a member `@Transient`, or declare a
+computed property in an extension.
+
 ```swift
 @CloudModel(schemaVersion: 1)
 final class Document {

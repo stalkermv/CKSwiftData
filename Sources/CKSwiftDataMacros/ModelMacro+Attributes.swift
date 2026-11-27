@@ -16,6 +16,10 @@ extension ModelMacro {
         if variable.hasMacroApplication(named: TransientPropertyMacro.name) {
             return []
         }
+        if let restriction = variable.persistenceRestriction {
+            context.diagnose(Diagnostic(node: Syntax(variable), message: restriction))
+            return []
+        }
         if variable.hasMacroApplication(named: RelationshipMacro.name) {
             return []
         }

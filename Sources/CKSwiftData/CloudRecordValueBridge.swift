@@ -30,8 +30,9 @@ extension CloudRecordValue {
         if let value = rawValue as? Data { return .data(value) }
         if let value = rawValue as? CKRecord.Reference {
             return try .reference(CloudRecordIdentifier(
-                recordName: value.recordID.recordName,
-                zone: zoneOverride ?? .init(value.recordID.zoneID.zoneName)
+                reference: value,
+                fieldID: fieldID,
+                zoneOverride: zoneOverride
             ))
         }
         if let value = rawValue as? [String], value.isEmpty == false { return .stringArray(value) }
@@ -41,8 +42,9 @@ extension CloudRecordValue {
         if let value = rawValue as? [CKRecord.Reference], value.isEmpty == false {
             return try .referenceArray(value.map { reference in
                 try CloudRecordIdentifier(
-                    recordName: reference.recordID.recordName,
-                    zone: zoneOverride ?? .init(reference.recordID.zoneID.zoneName)
+                    reference: reference,
+                    fieldID: fieldID,
+                    zoneOverride: zoneOverride
                 )
             })
         }
@@ -110,6 +112,37 @@ extension CloudRecordValue {
 }
 
 extension CloudRecordIdentifier {
+    /// Reads a CloudKit reference held by a local record.
+    ///
+    /// A model created locally keeps its record, and the references other
+    /// models store to it, in CloudKit's default zone until the store places
+    /// it. Only such an unplaced reference takes `zoneOverride`. A reference
+    /// that names another zone explicitly points at a different record space,
+    /// so substituting the zone would redirect it to an unrelated or missing
+    /// record; it is rejected instead.
+    init(
+        reference: CKRecord.Reference,
+        fieldID: CloudFieldIdentifier,
+        zoneOverride: CloudZoneIdentifier?
+    ) throws {
+        let zoneName = reference.recordID.zoneID.zoneName
+        let zone: CloudZoneIdentifier
+        if let zoneOverride,
+           zoneName != zoneOverride.rawValue,
+           zoneName != CKRecordZone.ID.defaultZoneName
+        {
+            throw CloudModelRuntimeError.unsupportedField(
+                fieldID,
+                reason: "the reference points to zone \(zoneName), outside the configured zone \(zoneOverride.rawValue)"
+            )
+        } else if let zoneOverride {
+            zone = zoneOverride
+        } else {
+            zone = try CloudZoneIdentifier(zoneName)
+        }
+        try self.init(recordName: reference.recordID.recordName, zone: zone)
+    }
+
     func cloudKitRecordID(in zone: CloudZoneIdentifier) throws -> CKRecord.ID {
         guard self.zone == zone else {
             throw CloudModelRuntimeError.invalidSnapshot(

@@ -356,10 +356,16 @@ public final class CloudModelContext {
     ) throws {
         let id = try model.cloudRecordIdentifier(in: zone)
         try recordContext.resolveConflict(for: id, using: resolution)
-        if case .useServer = resolution,
-           let server = recordContext.snapshot(for: id)
-        {
-            try model.applyCloudRecordSnapshot(server)
+        if case .useServer = resolution {
+            if let server = recordContext.snapshot(for: id) {
+                try model.applyCloudRecordSnapshot(server)
+            } else {
+                // The server no longer has the record and the caller accepted
+                // that deletion. Unbind the model exactly as a completed
+                // delete does, so the context no longer reports it as a
+                // tracked model whose edits a later save would persist.
+                models.removeValue(forKey: id)
+            }
         } else if case .apply = resolution,
                   let current = recordContext.snapshot(for: id)
         {

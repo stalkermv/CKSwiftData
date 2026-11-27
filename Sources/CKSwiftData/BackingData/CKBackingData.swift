@@ -196,8 +196,7 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
     {
         let property = findProperty(forKey: keyPath)
         let relation = property.metadata as? Schema.Relationship
-        let storedBacking = relatedBackingData[property.name] as? CKBackingData<Value>
-        let stored = storedBacking.map { Value(backingData: $0) }
+        let stored = storedRelatedModel(relatedBackingData[property.name], as: Value.self)
 
         if let relation, let stored {
             updateInverseRelationship(for: stored, relation: relation, adding: false)
@@ -238,10 +237,13 @@ final class CKBackingData<T: CloudKitModel>: BackingData {
             let newIDs = Set(arrayValue.map(\.recordID))
             for reference in oldReferences where newIDs.contains(reference.recordID) == false {
                 if let old = relatedBackingData[property.name] as? [String: Any],
-                   let oldBacking = old[reference.recordID.recordName] as? CKBackingData<OtherModel>
+                   let oldModel = storedRelatedModel(
+                       old[reference.recordID.recordName],
+                       as: OtherModel.self
+                   )
                 {
                     updateInverseRelationship(
-                        for: OtherModel(backingData: oldBacking),
+                        for: oldModel,
                         relation: relation,
                         adding: false
                     )
@@ -385,12 +387,14 @@ extension CKDatabase {
         guard let backingData = model.persistentBackingData as? CKBackingData<T> else {
             throw CloudModelRuntimeError.missingBackingData
         }
-        // Handle saving related records
-        for (_, value) in backingData.relatedBackingData {
-            if let relatedBackingData = value as? any BackingData<any CloudKitModel> {
-                _ = try await save(relatedBackingData.record)
-            }
+        // Save every related record first, including each member of a
+        // to-many relationship, so the parent never references a child that
+        // was not saved.
+        var savedRelated = [CKRecord.ID: CKRecord]()
+        for related in backingData.relatedRecordsToSave {
+            savedRelated[related.recordID] = try await save(related)
         }
+        backingData.adoptSavedRelatedRecords(savedRelated)
 
         let savedRecord = try await save(backingData.record)
         backingData.record = savedRecord

@@ -175,6 +175,7 @@ public final class CloudRecordContext {
             }
         }
         let startingStates = states
+        let startingRevisions = revisions
         let page = try await store.fetch(request, retryPolicy: retryPolicy)
         for snapshot in page.snapshots {
             if startingStates[snapshot.id] != nil,
@@ -205,6 +206,15 @@ public final class CloudRecordContext {
             )
             discardBarrierEpochs[snapshot.id] = discardEpochForRequest
         }
+        // Records the page could not read keep their local state, but their
+        // failure must be visible through `lastFailure(for:)` exactly as after
+        // an ordinary fetch.
+        mergeFetchFailures(
+            page.failures,
+            generation: fetchGeneration,
+            startingRevisions: startingRevisions,
+            startingStates: startingStates
+        )
         return page
     }
 

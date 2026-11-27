@@ -89,6 +89,12 @@ public actor CloudMigrationCoordinator {
             throw CloudMigrationError.invalidStageIndex(checkpoint.stageIndex)
         }
         if checkpoint.completed {
+            // A completed checkpoint is trusted only when it covers every
+            // stage of this plan. Any other index means the stored progress
+            // does not describe this plan, so no stage may be skipped.
+            guard checkpoint.stageIndex == plan.stages.count else {
+                throw CloudMigrationError.invalidStageIndex(checkpoint.stageIndex)
+            }
             return checkpoint
         }
         if checkpoint.stageIndex == plan.stages.count {

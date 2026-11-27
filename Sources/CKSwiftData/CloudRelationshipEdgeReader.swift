@@ -42,13 +42,36 @@ public struct CloudRelationshipEdgeQuery: Codable, Hashable, Sendable {
 public struct CloudRelationshipEdgePage: Codable, Hashable, Sendable {
     public let edges: [CloudRelationshipEdge]
     public let nextCursor: CloudPageCursor?
+    /// Edge records the store could not read while this page was assembled.
+    /// A non-empty list means `edges` may be missing relationships.
+    public let failures: [CloudRecordFailure]
 
     public init(
         edges: [CloudRelationshipEdge],
-        nextCursor: CloudPageCursor? = nil
+        nextCursor: CloudPageCursor? = nil,
+        failures: [CloudRecordFailure] = []
     ) {
         self.edges = edges
         self.nextCursor = nextCursor
+        self.failures = failures
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case edges
+        case nextCursor
+        case failures
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            edges: try container.decode([CloudRelationshipEdge].self, forKey: .edges),
+            nextCursor: try container.decodeIfPresent(CloudPageCursor.self, forKey: .nextCursor),
+            failures: try container.decodeIfPresent(
+                [CloudRecordFailure].self,
+                forKey: .failures
+            ) ?? []
+        )
     }
 }
 
@@ -94,6 +117,7 @@ public struct CloudRelationshipEdgeReader: Sendable {
             try Self.storeCursor(from: $0, for: query)
         }
         var collected = [CloudRelationshipEdge]()
+        var failures = [CloudRecordFailure]()
         var rawNextCursor: CloudPageCursor?
 
         while true {
@@ -114,6 +138,10 @@ public struct CloudRelationshipEdgeReader: Sendable {
                 ].compactMap(\.self))
             )
             let page = try await store.fetch(request, retryPolicy: retryPolicy)
+            // A record that failed to load may be one of this source's edges.
+            // Report it with the page instead of returning a graph that only
+            // looks complete.
+            failures.append(contentsOf: page.failures)
             for snapshot in page.snapshots {
                 guard snapshot.fields[sourceField] == .reference(query.source),
                       snapshot.fields[relationshipField] == .string(query.relationship.rawValue),
@@ -158,7 +186,11 @@ public struct CloudRelationshipEdgeReader: Sendable {
         let nextCursor = try rawNextCursor.map {
             try Self.edgeCursor(for: query, storeCursor: $0)
         }
-        return CloudRelationshipEdgePage(edges: collected, nextCursor: nextCursor)
+        return CloudRelationshipEdgePage(
+            edges: collected,
+            nextCursor: nextCursor,
+            failures: failures
+        )
     }
 
     private static func edgeCursor(

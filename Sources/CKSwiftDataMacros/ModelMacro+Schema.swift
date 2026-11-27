@@ -10,7 +10,9 @@ extension ModelMacro {
         in context: some MacroExpansionContext
     ) -> DeclSyntax {
         let metadataItems = properties.compactMap { property -> String? in
-            if property.hasMacroApplication(named: TransientPropertyMacro.name) {
+            if property.hasMacroApplication(named: TransientPropertyMacro.name) ||
+                property.persistenceRestriction != nil
+            {
                 return nil
             }
             guard let propertyName = property.bindings.first?

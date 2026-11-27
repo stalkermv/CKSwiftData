@@ -25,9 +25,12 @@ extension ModelMacro {
 
         var declarations = [DeclSyntax]()
         let className = classDeclSyntax.name
+        // A member that cannot be persisted is diagnosed where the member
+        // attribute is attached; it never reaches storage, initializers, or
+        // the schema.
         let properties = declaration.memberBlock.members.compactMap { member in
             member.decl.as(VariableDeclSyntax.self)
-        }
+        }.filter { $0.persistenceRestriction == nil }
 
         declaration.addIfNeeded(
             ModelMacro.persistentBackingData(className),

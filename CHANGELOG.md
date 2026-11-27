@@ -87,6 +87,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   message instead of an unlabeled `try!` crash.
 - Failed record fetches in the legacy `CKDatabase.records(of:matching:)` helper
   are logged through `os.Logger` instead of `print`.
+- `CloudMigrationCoordinator` runs a plan whose stored checkpoint is marked
+  completed but does not cover every stage of that plan. It throws
+  `CloudMigrationError.invalidStageIndex` instead of reporting success.
+- `CloudMigrationPlan.build` rejects a rename from a relationship, a rename that
+  changes the attribute kind, value kind, optionality, or storage options, a
+  rename from a field the new schema still declares, and two fields renamed from
+  the same source.
+- Resolving a conflict with `.useServer` when the server has deleted the record
+  unbinds the model from `CloudModelContext`, as a completed delete does.
+- `CloudRelationshipEdgeReader` reports edge records the store could not read in
+  `CloudRelationshipEdgePage.failures`. It returned an incomplete page as if it
+  were complete before.
+- `CloudRecordContext.refresh(_:discardLocalChanges:retryPolicy:)` with
+  `discardLocalChanges: true` records per-record fetch failures, so
+  `lastFailure(for:)` reports them as it does after an ordinary fetch.
+- Reading a model's reference to a record in another zone throws instead of
+  pointing it at a record with the same name in the configured zone.
+- `@CloudModel` reports static, class, computed, `lazy`, `weak`, `unowned`, and
+  `let` members, members with custom accessors or observers, declarations with
+  several properties, and members without an explicit type at the declaration.
+  Before, such members entered the generated storage and schema.
+- The legacy `CKDatabase.save(_:)` saves every related record first, including
+  each member of a to-many relationship and records loaded by preloading, and
+  keeps the saved copies. It saved no related record before.
+- Replacing a relationship whose value was preloaded as a raw record updates
+  the inverse relationship of the old value in the legacy backing layer.
 
 ### Removed
 - The `swift-collections` and `SwiftHelpers` package dependencies.

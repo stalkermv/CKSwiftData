@@ -154,12 +154,20 @@ public struct CloudMigrationPlan: Codable, Hashable, Sendable {
                 }
             }
 
+            var claimedRenameSources = Set<CloudFieldIdentifier>()
             for newField in newModel.fields {
                 guard let oldField = oldFields[newField.id] else {
                     if case let .attribute(newAttribute) = newField,
                        let renamedFrom = newAttribute.renamedFrom,
-                       oldFields[renamedFrom] != nil
+                       let sourceField = oldFields[renamedFrom]
                     {
+                        try validateRename(
+                            of: sourceField,
+                            to: newAttribute,
+                            in: newModel,
+                            retainedFields: newFields,
+                            claimedSources: &claimedRenameSources
+                        )
                         changes.append(CloudMigrationChange(
                             modelID: newModel.id,
                             fieldID: newField.id,

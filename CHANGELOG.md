@@ -7,16 +7,113 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
-- Initial documentation scaffold and community health files
-- CI workflow that builds and tests the package on macOS with Swift 6.1
-- README with quick-start examples for using the macros
+- `@Relationship(inverse:)` takes a key path such as `\TodoItem.project` on one
+  side of a relationship. `CloudSchema` infers the inverse of the other side and
+  rejects an inverse that two relationships claim
+  (`CloudSchemaError.ambiguousInverse`). `inverseName:` still works.
+- Typed CloudKit identities (container, zone, record, and model identifiers)
+  and immutable, validated schema manifests with deterministic `Codable`
+  encoding.
+- Typed record boundary (`CloudRecordValue`, `CloudRecordSnapshot`,
+  `CloudRecordMutation`) with request validation, explicit complete and partial
+  modification outcomes, and a deterministic JSON codec for custom `Codable`
+  values.
+- `CloudKitRecordStore` actor and main-actor `CloudModelContext` /
+  `CloudModelContainer` with an identity map, change tracking, rollback,
+  projected (partial) fetches, upsert/update semantics, and optimistic conflict
+  handling.
+- `CloudKitDatabaseClient`, an explicit CloudKit adapter with an injected
+  `CKDatabase`, cursor routing, and per-record failures.
+- Retry policies that classify transient `CKError` cases, honor retry-after
+  delays, and propagate cancellation.
+- Asset staging with ownership leases, cancellation-safe cleanup, and explicit
+  uploads for `@Attribute(.externalStorage)` fields.
+- Canonical relationship edge records with a graph planner, edge reader, and
+  explicit delete-rule plans.
+- Migration compatibility planning, required-field backfill stages, and a
+  checkpoint coordinator with an injectable stage executor.
+- `CKSwiftDataTesting.InMemoryCloudDatabaseClient` and a scripted client for
+  tests and previews.
+- `CKSwiftDataPerformance` benchmark executable, a performance test target, and
+  a Time Profiler script.
+- `swiftformat` configuration and API contract and architecture documents.
+- DocC documentation catalog (guides for getting started, modeling, testing,
+  relationships and migrations, and the legacy layer), published to GitHub
+  Pages by a documentation workflow, and a `swift-docc-plugin` dependency to
+  build it.
+- Issue and pull request templates.
+- Swift Package Index configuration for the DocC documentation.
 
-## [0.1.0] - 2025-02-26
+### Changed
+- Rewrote the `@CloudModel`, `@Attribute`, and `@Relationship` macros to
+  generate typed storage and schema metadata.
+- `@CloudModel` uses the class name as the record type when `recordType:` is
+  omitted, and the schema cache stays enabled for such models.
+- CI now builds and tests with complete strict concurrency checking, compiles
+  the package for iOS, tvOS, watchOS, and macOS, and builds the documentation,
+  all on the Xcode 27 runner image.
+- `Package.resolved` is no longer tracked.
+- The minimum supported Swift version is now 6.4, which needs Xcode 27 or later.
+- The macro target depends on swift-syntax 604 or later.
 
-### Added
-- `@CloudModel` macro that synthesizes CloudKit backing storage and schema metadata
-- `@PersistedProperty`, `@Attribute`, and `@Relationship` macros for describing CloudKit fields
-- Runtime support for CloudKit-backed models, including `CKDatabase` helpers and schema types
+### Fixed
+- Default values of model properties (`var title: String = ""`,
+  `var created: Date = .now`) are written when you create a model with `init()`,
+  so an insert no longer fails with a missing required field when you do not
+  assign them. Defaults written as implicit members, such as `.now`, compile.
+- A property such as `var nickname: String? = "nick"` is an optional field. It
+  was treated as required before, so clearing it blocked the insert.
+- Attributes declared with `.allowsCloudEncryption` are read from and written to
+  the encrypted record fields by the legacy `CKDatabase.save(_:)` and
+  `records(of:matching:)` helpers. They were written as plain values before.
+- Empty `[String]`, `[Int64]`, `[Double]`, and `[Date]` attributes can be read
+  from CloudKit and written back. The schema records the array kind
+  (`CloudAttributeSchema.valueKind`), so an empty array keeps its type.
+- Saving a fetched model that has an external-storage asset no longer fails when
+  you edit another field. An update sends only the changed fields, so the stored
+  asset is kept.
+- Deleting a record that was inserted but not yet saved discards it locally
+  instead of sending a remote delete that fails the whole save.
+- Fetching with a desired field that is not in the schema throws
+  `CloudModelError.invalidRequest` for every client. The in-memory client no
+  longer returns an empty projection.
+- `CloudJSONRecordValueCodec` writes dictionary keys in sorted order, so equal
+  values always encode to the same bytes.
+- `@CloudModel(recordType:)` is now used for the schema, the CloudKit record type,
+  and the destination of relationships. Before, the class name was used.
+- Temporary files for legacy `@Attribute(.externalStorage)` assets now use a
+  unique location per write, so repeated or concurrent writes no longer
+  overwrite each other. Encoding and write failures stop with a descriptive
+  message instead of an unlabeled `try!` crash.
+- Failed record fetches in the legacy `CKDatabase.records(of:matching:)` helper
+  are logged through `os.Logger` instead of `print`.
+- `CloudMigrationCoordinator` runs a plan whose stored checkpoint is marked
+  completed but does not cover every stage of that plan. It throws
+  `CloudMigrationError.invalidStageIndex` instead of reporting success.
+- `CloudMigrationPlan.build` rejects a rename from a relationship, a rename that
+  changes the attribute kind, value kind, optionality, or storage options, a
+  rename from a field the new schema still declares, and two fields renamed from
+  the same source.
+- Resolving a conflict with `.useServer` when the server has deleted the record
+  unbinds the model from `CloudModelContext`, as a completed delete does.
+- `CloudRelationshipEdgeReader` reports edge records the store could not read in
+  `CloudRelationshipEdgePage.failures`. It returned an incomplete page as if it
+  were complete before.
+- `CloudRecordContext.refresh(_:discardLocalChanges:retryPolicy:)` with
+  `discardLocalChanges: true` records per-record fetch failures, so
+  `lastFailure(for:)` reports them as it does after an ordinary fetch.
+- Reading a model's reference to a record in another zone throws instead of
+  pointing it at a record with the same name in the configured zone.
+- `@CloudModel` reports static, class, computed, `lazy`, `weak`, `unowned`, and
+  `let` members, members with custom accessors or observers, declarations with
+  several properties, and members without an explicit type at the declaration.
+  Before, such members entered the generated storage and schema.
+- The legacy `CKDatabase.save(_:)` saves every related record first, including
+  each member of a to-many relationship and records loaded by preloading, and
+  keeps the saved copies. It saved no related record before.
+- Replacing a relationship whose value was preloaded as a raw record updates
+  the inverse relationship of the old value in the legacy backing layer.
 
-[Unreleased]: https://github.com/stalkermv/CKSwiftData/compare/0.1.0...HEAD
-[0.1.0]: https://github.com/stalkermv/CKSwiftData/releases/tag/0.1.0
+### Removed
+- The `swift-collections` and `SwiftHelpers` package dependencies.
+- The demo `User` model that was declared in the library target.

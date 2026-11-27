@@ -1,0 +1,8 @@
+--swiftversion 6.4
+--disable trailingCommas
+--disable numberFormatting
+--disable extensionAccessControl
+--disable opaqueGenericParameters
+--disable unusedArguments
+--exclude .build
+--exclude docs

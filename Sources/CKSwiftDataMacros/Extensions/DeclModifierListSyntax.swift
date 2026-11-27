@@ -25,7 +25,7 @@ extension DeclModifierListSyntax {
     /// Filters out access level modifiers from the declaration modifier list.
     private func filterOutAccessModifiers() -> DeclModifierListSyntax {
         filter { modifier in
-            guard case .keyword(let keyword) = modifier.name.tokenKind else {
+            guard case let .keyword(keyword) = modifier.name.tokenKind else {
                 return true // Keep non-keyword modifiers.
             }
             return !isAccessLevelModifier(keyword)
@@ -36,9 +36,9 @@ extension DeclModifierListSyntax {
     private func isAccessLevelModifier(_ keyword: Keyword) -> Bool {
         switch keyword {
         case .fileprivate, .private, .internal, .public:
-            return false // These are access level modifiers, should be filtered out.
+            false // These are access level modifiers, should be filtered out.
         default:
-            return true // Not an access level modifier.
+            true // Not an access level modifier.
         }
     }
 }

@@ -7,8 +7,7 @@ import Foundation
 /// An interface for describing a property.
 @available(swift 5.9)
 @available(macOS 14, iOS 17, tvOS 17, watchOS 10, *)
-public protocol SchemaProperty : Decodable, Encodable, Hashable {
-
+public protocol SchemaProperty: Decodable, Encodable, Hashable {
     var name: String { get set }
 
     var originalName: String { get set }
@@ -29,20 +28,19 @@ public protocol SchemaProperty : Decodable, Encodable, Hashable {
 @available(swift 5.9)
 @available(macOS 14, iOS 17, tvOS 17, watchOS 10, *)
 extension SchemaProperty {
-
     public var isAttribute: Bool {
-        return false
+        false
     }
 
     public var isRelationship: Bool {
-        return false
+        false
     }
 
     public var isTransient: Bool {
-        return false
+        false
     }
 
     public var isOptional: Bool {
-        return false
+        false
     }
 }

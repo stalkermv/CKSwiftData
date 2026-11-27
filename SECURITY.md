@@ -4,8 +4,8 @@
 
 | Version | Supported |
 |---------|-----------|
-| main    | ✅ |
-| < 0.1.0 | ❌ |
+| 0.2.x   | ✅ |
+| < 0.2.0 | ❌ |
 
 Security fixes are always released on the latest minor version. Please upgrade to the newest release to receive patches.
 

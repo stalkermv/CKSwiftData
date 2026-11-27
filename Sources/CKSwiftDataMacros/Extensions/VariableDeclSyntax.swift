@@ -7,11 +7,11 @@ import SwiftSyntax
 extension VariableDeclSyntax {
     func hasMacroApplication(named name: String) -> Bool {
         attributes.contains { attribute in
-            guard case .attribute(let attr) = attribute else { return false }
-            return attr.attributeName.tokens(viewMode: .all).map { $0.tokenKind } == [.identifier(name)]
+            guard case let .attribute(attr) = attribute else { return false }
+            return attr.attributeName.tokens(viewMode: .all).map(\.tokenKind) == [.identifier(name)]
         }
     }
-    
+
     func makePrivatePrefixed(
         with prefix: String,
         adding attribute: AttributeSyntax

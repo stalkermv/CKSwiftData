@@ -9,8 +9,11 @@ import Foundation
     names: arbitrary
 )
 @attached(memberAttribute)
-@attached(extension, conformances: Observable, CloudKitModel)
-public macro CloudModel() = #externalMacro(
+@attached(extension, conformances: Observable, CloudKitModel, CloudPersistentModel)
+public macro CloudModel(
+    recordType: String? = nil,
+    schemaVersion: Int = 1
+) = #externalMacro(
     module: "CKSwiftDataMacros",
     type: "ModelMacro"
 )

@@ -14,6 +14,8 @@ Screenshots or stack traces make debugging even faster.
 
 ## Ready to Contribute? 🚀
 
+You need Xcode 27 or later (Swift 6.4 or later).
+
 1. **Fork and clone**
    ```bash
    git clone https://github.com/YOUR_USERNAME/CKSwiftData.git
@@ -27,13 +29,31 @@ Screenshots or stack traces make debugging even faster.
 
 3. **Make your changes**
    - Keep code style consistent with the existing codebase
-   - Prefer adding DocC comments for new public APIs
+   - Prefer adding DocC comments for new public APIs, and update the
+     articles in `Sources/CKSwiftData/Documentation.docc` when behavior changes
    - Update or add tests when introducing new behavior
 
 4. **Verify locally**
    ```bash
-   swift build
-   swift test --parallel
+   swift build -Xswiftc -strict-concurrency=complete
+   swift test --parallel -Xswiftc -strict-concurrency=complete
+   swiftformat --lint .
+   ```
+
+   Build the DocC documentation (it must build without warnings):
+   ```bash
+   DOCS_DIR="$(mktemp -d)"
+   swift package --allow-writing-to-directory "$DOCS_DIR" \
+     generate-documentation --target CKSwiftData \
+     --output-path "$DOCS_DIR" \
+     --transform-for-static-hosting \
+     --hosting-base-path CKSwiftData
+   ```
+
+   Optionally compile for another Apple platform:
+   ```bash
+   xcodebuild build -scheme CKSwiftData \
+     -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO
    ```
 
 5. **Open a pull request**
@@ -55,9 +75,11 @@ Screenshots or stack traces make debugging even faster.
 
 ## Release Process
 
-1. Update [`CHANGELOG.md`](CHANGELOG.md)
-2. Bump the version in `Package.swift`
-3. Create a GitHub release with notes from the changelog
+1. Update [`CHANGELOG.md`](CHANGELOG.md) in a pull request against `main`
+   and squash-merge it once CI passes.
+2. Tag the release commit on `main` with the version number, without a `v`
+   prefix (for example `0.2.0`).
+3. Create a GitHub release for the tag with notes from the changelog.
 
 ## Questions?
 

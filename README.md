@@ -1,201 +1,139 @@
 # CKSwiftData
 
-> [!WARNING]
-> This project is in an early stage of development and is not ready for production use. APIs and behavior may change without notice. Use at your own risk.
-
 [![Tests](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml/badge.svg)](https://github.com/stalkermv/CKSwiftData/actions/workflows/tests.yml)
-[![Swift 6.1+](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
-[![Platforms](https://img.shields.io/badge/platforms-iOS%2017%20%7C%20macOS%2014%20%7C%20tvOS%2017%20%7C%20watchOS%2010-lightgrey.svg)](https://developer.apple.com)
+[![Swift 6.4+](https://img.shields.io/badge/Swift-6.4+-orange.svg)](https://swift.org)
+[![Platform](https://img.shields.io/badge/platform-iOS%2017%2B%20%7C%20macOS%2014%2B%20%7C%20tvOS%2017%2B%20%7C%20watchOS%2010%2B-lightgrey.svg)](https://developer.apple.com/swift/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Macro-powered CloudKit models with SwiftData-inspired ergonomics. Annotate your classes with `@CloudModel` and let CKSwiftData generate CloudKit plumbing, record metadata accessors, schema information, and persistence helpers that feel just like SwiftData – but for CloudKit.
+Declare CloudKit models with macros, in the style of SwiftData. Save and fetch them through a context that you can test without CloudKit.
 
-- 📚 **Documentation** – Rich inline docs and DocC comments for public APIs
-- 💡 **Examples** – See [Quick Start](#quick-start) and [Usage Examples](#usage-examples)
-- 🤝 **Contributions** – Always welcome! See [CONTRIBUTING.md](CONTRIBUTING.md)
-- 🪪 **License** – MIT License, see [LICENSE](LICENSE)
+- Declare models with `@CloudModel`, `@Attribute`, and `@Relationship`
+- Save and fetch through a main-actor `CloudModelContext`
+- Inject the database client explicitly; property getters never use the network
+- Get typed fetch pages, save results, and conflict errors
+- Test with in-memory and scripted clients
 
-## Table of Contents
+## Requirements
 
-- [Overview](#overview)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage Examples](#usage-examples)
-  - [Persisted Attributes](#persisted-attributes)
-  - [Relationships](#relationships)
-  - [CloudKit Persistence](#cloudkit-persistence)
-- [Schema Metadata](#schema-metadata)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Overview
-
-CKSwiftData bridges the gap between SwiftData's expressive model syntax and CloudKit's remote persistence. You write familiar SwiftData-style model code; CKSwiftData handles the macros, backing storage, and CloudKit record interactions under the hood.
-
-The package exposes two modules:
-
-- `CKSwiftData` – Public macros and runtime helpers used by your app
-- `CKSwiftDataMacros` – Compiler plugin that powers macro expansion (imported automatically when you use the macros)
-
-## Features
-
-- ✅ **`@CloudModel` macro** – Generates CloudKit boilerplate, including backing storage, observation support, and schema metadata.
-- ✅ **`@PersistedProperty` macro** – Synthesizes accessors that read/write from CloudKit records and integrates with Swift observation.
-- ✅ **`@Attribute` options** – Configure CloudKit fields (original names, hashing modifiers, external storage, and more).
-- ✅ **`@Relationship` macro** – Model CloudKit references with convenient projected values and delete rules.
-- ✅ **Schema-aware runtime** – `Schema.PropertyMetadata` and `Schema.Relationship` describe your model for migrations, tooling, or validation.
-- ✅ **CloudKit helpers** – Save, delete, and fetch typed models using extensions on `CKDatabase` and `CKQuery`.
-- ✅ **Observation integration** – Generated code uses `ObservationRegistrar` so SwiftUI updates automatically when records change.
+- Swift 6.4 or later (Xcode 27 or later)
+- iOS 17, macOS 14, tvOS 17, or watchOS 10 and later
 
 ## Installation
 
 Add CKSwiftData to your `Package.swift`:
 
 ```swift
-// swift-tools-version: 6.1
-
-import PackageDescription
-
-let package = Package(
-    // ...
-    dependencies: [
-        .package(url: "https://github.com/stalkermv/CKSwiftData.git", .upToNextMinor(from: "0.1.0"))
-    ],
-    targets: [
-        .target(
-            name: "YourFeatureModule",
-            dependencies: [
-                .product(name: "CKSwiftData", package: "CKSwiftData")
-            ]
-        ),
-    ]
-)
+dependencies: [
+    .package(url: "https://github.com/stalkermv/CKSwiftData.git", .upToNextMinor(from: "0.2.0"))
+],
+targets: [
+    .target(
+        name: "YourApp",
+        dependencies: [
+            .product(name: "CKSwiftData", package: "CKSwiftData")
+        ]
+    )
+]
 ```
-
-Then import CKSwiftData where you declare models:
-
-```swift
-import CKSwiftData
-```
-
-> **Tip:** While APIs stabilize, prefer `.upToNextMinor` requirements to avoid unexpected breaking changes.
 
 ## Quick Start
-
-### 1. Declare a CloudKit model
 
 ```swift
 import CKSwiftData
 import CloudKit
 
-@CloudModel
+@CloudModel(schemaVersion: 1)
 final class Folder {
-    var title: String
+    var title: String = ""
     var color: String?
-    @Relationship(deleteRule: .cascade) var snippets: [Snippet]
+    @Relationship(deleteRule: .cascade, inverse: \Note.folder)
+    var notes: [Note] = []
 }
 
 @CloudModel
-final class Snippet {
-    var text: String
-    var lastUpdated: Date
-    @Relationship(inverse: \Snippet.folder) var folder: Folder?
+final class Note {
+    var text: String = ""
+    var created: Date = .now
+    @Relationship var folder: Folder?
+}
+
+@MainActor
+func run() async throws {
+    let configuration = CloudStoreConfiguration(
+        containerIdentifier: try CloudContainerIdentifier("iCloud.com.example.App"),
+        location: .privateDatabase(.default)
+    )
+    let schema = try CloudSchema(models: [
+        Folder.cloudModelSchema(),
+        Note.cloudModelSchema()
+    ])
+    let database = CKContainer(identifier: configuration.containerIdentifier.rawValue)
+        .privateCloudDatabase
+    let client = try CloudKitDatabaseClient(
+        schema: schema,
+        configuration: configuration,
+        database: database
+    )
+    let container = try CloudModelContainer(
+        schema: schema,
+        configuration: configuration,
+        client: client
+    )
+    let context = container.mainContext
+
+    // Save a new folder with a note.
+    let folder = Folder()
+    folder.title = "My Ideas"
+    let note = Note()
+    note.text = "Write a README"
+    note.folder = folder
+    try context.insert(folder)
+    try context.insert(note)
+    let result = try await context.save()
+    print("Failed records: \(result.failures.count)")
+
+    // Fetch folders back.
+    let page = try await context.fetch(try CloudFetchDescriptor<Folder>(limit: 100))
+    print("Fetched \(page.models.count) folders")
 }
 ```
 
-### 2. Work with models just like SwiftData
+A property takes its default value when you create the model, so you only assign what differs. In the example, `note.created` is the time of creation. A property without a default value must be assigned before you insert the model.
 
-```swift
-let folder = Folder()
-folder.title = "My Ideas"
+The record type is the class name. To use another name, write `@CloudModel(recordType: "Folder")`. Set it explicitly for models that are already in production: renaming the class changes the record type in CloudKit.
 
-let database = CKContainer.default().publicCloudDatabase
-let savedFolder = try await database.save(folder)
+Name the inverse of a relationship on one side only, with a key path such as `\Note.folder`. The other side is filled in for you. If you put a key path on both sides, the compiler reports a circular reference. You can also name both sides with strings: `@Relationship(inverseName: "folder")`.
+
+## Testing
+
+Use `CKSwiftDataTesting.InMemoryCloudDatabaseClient` in place of `CloudKitDatabaseClient`. It stores records in memory and never contacts CloudKit. `ScriptedCloudDatabaseClient` wraps another client and fails calls on demand, so you can test error handling.
+
+## Documentation
+
+The DocC documentation is published at [stalkermv.github.io/CKSwiftData](https://stalkermv.github.io/CKSwiftData/documentation/ckswiftdata/). It covers models, relationships, testing, and migrations. See also [API_CONTRACT.md](API_CONTRACT.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Status
+
+CKSwiftData is pre-1.0. The API can change between minor releases. These parts are not supported yet:
+
+- Tests against a live CloudKit container (all tests use in-memory clients)
+- Predicate and sort queries
+- Shared databases in the CloudKit client
+- Ready-made migration backfills
+- Removal of the legacy `BackingData` layer
+
+## Development
+
+```bash
+swift build -Xswiftc -strict-concurrency=complete
+swift test -Xswiftc -strict-concurrency=complete
+swiftformat --lint .
 ```
 
-### 3. Fetch back strongly-typed models
+## Release
 
-```swift
-let query = CKQuery(recordType: Folder.self, predicate: NSPredicate(value: true))
-let (folders, cursor) = try await database.records(of: Folder.self, matching: query)
-```
-
-## Usage Examples
-
-### Persisted Attributes
-
-CKSwiftData handles default values, optional storage, and assets when you opt into `@Attribute(.externalStorage)`.
-
-```swift
-@CloudModel
-final class AssetExample {
-    @Attribute(.externalStorage)
-    var payload: Data
-}
-```
-
-The generated accessors automatically encode/decode values through `CKAsset` when `.externalStorage` is set.
-
-### Relationships
-
-`@Relationship` manages CloudKit references for working with models.
-
-```swift
-@CloudModel
-final class Project {
-    var name: String
-    @Relationship(deleteRule: .cascade, inverse: \Task.project) var tasks: [Task]
-}
-
-@CloudModel
-final class Task {
-    var title: String
-    @Relationship var project: Project?
-}
-
-task.project = project
-```
-
-### CloudKit Persistence
-
-Once you obtain a `CKDatabase`, you can persist models using familiar async APIs:
-
-```swift
-let database = CKContainer.default().publicCloudDatabase
-let project = try await database.save(project)
-
-try await database.delete(task)
-```
-
-Behind the scenes, CKSwiftData keeps CloudKit references in sync and stores relationship backing data so you can traverse the graph locally.
-
-## Schema Metadata
-
-Every `@CloudModel` exposes static `schemaMetadata` describing its attributes and relationships. You can inspect it for migrations, validation, or generating CloudKit dashboards.
-
-```swift
-for property in Project.schemaMetadata {
-    print("\(property.name): \(property.metadata)")
-}
-```
-
-The backing types live under `Schema.Attribute`, `Schema.Relationship`, and `Schema.PropertyMetadata` for further customization.
-
-## Roadmap
-
-- 🔄 Relationship collections for arbitrarily large to-many sets
-- 🧪 Comprehensive unit tests covering macro expansions
-- 🛠️ Schema tooling for migrating CloudKit containers
-- 📄 DocC documentation bundle
-
-See [CHANGELOG.md](CHANGELOG.md) for released versions and detailed notes.
-
-## Contributing
-
-Contributions are very welcome! Check out [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, development workflow, and contact information. Security issues? Please follow the process in [SECURITY.md](SECURITY.md).
+Releases use plain version tags such as `0.2.0`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process and [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 
-CKSwiftData is released under the [MIT License](LICENSE).
-
+CKSwiftData is available under the MIT license. See [LICENSE](LICENSE).

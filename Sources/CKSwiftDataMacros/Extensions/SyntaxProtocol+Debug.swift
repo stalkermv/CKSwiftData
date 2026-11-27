@@ -5,9 +5,9 @@
 //  Created by Valeriy Malishevskyi on 01.09.2025.
 //
 
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
-import SwiftDiagnostics
 
 extension SyntaxProtocol {
     func debug(_ message: String) throws {

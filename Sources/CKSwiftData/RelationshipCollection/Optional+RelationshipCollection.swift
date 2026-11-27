@@ -4,7 +4,8 @@
 
 import Foundation
 
-extension Optional : RelationshipCollection
-where Wrapped : Sequence, Wrapped.Element : CloudKitModel {
+extension Optional: RelationshipCollection
+    where Wrapped: Sequence, Wrapped.Element: CloudKitModel
+{
     public typealias PersistentElement = Wrapped.Element
 }

@@ -1,8 +1,7 @@
-// swift-tools-version: 6.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.4
 
-import PackageDescription
 import CompilerPluginSupport
+import PackageDescription
 
 let package = Package(
     name: "CKSwiftData",
@@ -11,27 +10,25 @@ let package = Package(
         .library(name: "CKSwiftData", targets: ["CKSwiftData"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "601.0.0"),
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.2.0"),
-        .package(url: "https://github.com/stalkermv/SwiftHelpers.git", from: "1.0.0")
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "604.0.0"),
+        // Documentation generation
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "CKSwiftData",
-            dependencies: [
-                "CKSwiftDataMacros",
-                .product(name: "Collections", package: "swift-collections"),
-                .product(name: "SwiftHelpers", package: "SwiftHelpers")
-            ]
+            dependencies: ["CKSwiftDataMacros"]
+        ),
+        .executableTarget(
+            name: "CKSwiftDataPerformance",
+            dependencies: ["CKSwiftData"],
+            path: "Benchmarks/CKSwiftDataPerformance"
         ),
         .macro(
             name: "CKSwiftDataMacros",
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
-                // Added explicit dependencies to resolve linker undefined symbols
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
                 .product(name: "SwiftDiagnostics", package: "swift-syntax")
@@ -39,7 +36,18 @@ let package = Package(
         ),
         .testTarget(
             name: "CKSwiftDataTests",
-            dependencies: ["CKSwiftData"]
+            dependencies: [
+                "CKSwiftData",
+                "CKSwiftDataMacros",
+                .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax")
+            ]
+        ),
+        .testTarget(
+            name: "CKSwiftDataPerformanceTests",
+            dependencies: ["CKSwiftData"],
+            path: "Tests/CKSwiftDataPerformanceTests"
         ),
     ]
 )
